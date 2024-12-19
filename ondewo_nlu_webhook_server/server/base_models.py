@@ -255,6 +255,7 @@ class IntentMessage(BaseModel):
     platform: Optional[str] = None
     is_prompt: Optional[bool] = None
 
+    @classmethod
     @field_validator('platform')
     def validate_platform(cls, value: str) -> str:
         if value and value not in INTENT_MESSAGE_PLATFORM_ENUM_SET:

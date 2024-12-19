@@ -35,7 +35,7 @@ from ondewo_nlu_webhook_server.server.base_models import (
 )
 
 
-class TestWebhookServer:
+class TestWebhookServerE2e:
     """
     A test fixture is provided that containerizes the current implementation via the Dockerfile in the root directory
     There are 3 tests defined that can be run for arbitrary implementations in CUSTOM_CODE.py:

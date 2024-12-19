@@ -18,21 +18,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.12"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --config dockerfiles/code_checks/.flake8 --count --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --config dockerfiles/code_checks/.flake8 --count --exit-zero --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --config dockerfiles/code_checks/.flake8 --count --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --config dockerfiles/code_checks/.flake8 --count --exit-zero --statistics
+      - name: Load environment variables
+        run: |
+          set -a
+          source envs/local.env
+          set +a
+      - name: webhook_server_tests_e2e.sh
+        run: |
+          tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh
+      - name: webhook_server_tests_e2e.sh
+        run: |
+          tests/pytest_utils/scripts/webhook_server_tests_e2e.sh

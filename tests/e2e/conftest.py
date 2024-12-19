@@ -36,9 +36,12 @@ from ondewo.logging.logger import logger_console as log
 
 # Container and image tag constants
 CONTAINER_TAG: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME", "")
+assert CONTAINER_TAG
 CONTAINER_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_CONTAINER_NAME", "")
+assert CONTAINER_NAME
 # The image ID should match the tag used for building
 IMAGE_TAG: str = CONTAINER_TAG  # This should match the tag set when building the image
+assert IMAGE_TAG
 
 
 class CustomDockerClient(APIClient):
