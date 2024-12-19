@@ -40,7 +40,9 @@ jobs:
           set +a
       - name: webhook_server_tests_e2e.sh
         run: |
-          tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh
+          export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh "tests/ondewo_nlu_webhook_server tests/ondewo_nlu_webhook_server_custom_integration"
       - name: webhook_server_tests_e2e.sh
         run: |
-          tests/pytest_utils/scripts/webhook_server_tests_e2e.sh
+          export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          tests/pytest_utils/scripts/webhook_server_tests_e2e.sh "tests/e2e"
