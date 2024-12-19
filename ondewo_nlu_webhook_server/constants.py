@@ -18,8 +18,3 @@ SLOT_FILLING_CASE: str = "slot_filling"
 RESPONSE_REFINEMENT_CASE: str = "response_refinement"
 
 CALL_CASES: List[str] = [SLOT_FILLING_CASE, RESPONSE_REFINEMENT_CASE]
-
-AUTH_TOKENS = [
-    "1234",  # TODO: change as needed
-    "5678",  # TODO: change as needed
-]

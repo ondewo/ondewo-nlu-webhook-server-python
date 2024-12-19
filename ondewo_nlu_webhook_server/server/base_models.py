@@ -51,11 +51,11 @@ with open(
 
 class WebhookResponseModel(BaseModel):
     fulfillmentText: str
-    fulfillmentMessages: list[Dict[str, Any]]  # TODO: make better so pydantic can parse full objects according to proto
+    fulfillmentMessages: list[Dict[str, Any]]
     source: str
     payload: Dict[str, Any]
-    outputContexts: list[Dict[str, Any]]  # TODO: make better so pydantic can parse full objects according to proto
-    followupEventInput: Dict[str, Any]  # TODO: make better so pydantic can parse full objects according to proto
+    outputContexts: list[Dict[str, Any]]
+    followupEventInput: Dict[str, Any]
 
 
 class TextMessage(BaseModel):

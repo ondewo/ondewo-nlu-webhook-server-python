@@ -771,7 +771,7 @@ class LanguageCode(Enum):
     ne_NP = "ne-NP"  # Nepali (Nepal)
     nl_BE = "nl-BE"  # Dutch (Belgium)
     nl_NL = "nl-NL"  # Dutch (Netherlands)
-    no_NO = "no-NO"  # Norwegian Bokmål (Norway) # TODO
+    no_NO = "no-NO"  # Norwegian Bokmål (Norway)
     pa_Guru_IN = "pa-Guru-IN"  # Punjabi (Gurmukhi India)
     pa_IN = "pa-IN"  # Punjabi (India)
     pa_PK = "pa-PK"  # Punjabi (Pakistan)
