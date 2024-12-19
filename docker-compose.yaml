@@ -1,0 +1,52 @@
+# Copyright 2021-2025 ONDEWO GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+services:
+
+  ondewo-nlu-webhook-server-python:
+    build:
+      dockerfile: dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile
+      context: .
+      target: uncythonized
+      args:
+        HOST_DOCKER_GID: ${HOST_DOCKER_GID}  # check *your* docker group id with: `getent group docker`
+    networks:
+      - ondewo-nlu-webhook-server-python-network
+    ports:
+      - ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}
+    environment:
+      - HOST_DOCKER_GID
+      - MODULE_NAME
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}/health || exit 1" ]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+networks:
+
+  ondewo-nlu-webhook-server-python-network:
+    name: ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_DOCKER_NETWORK_NAME}
+    # bridge	Creates a new network that is isolated from the host network.
+    # host	    Connects the container directly to the host network.
+    # overlay	Creates a network that spans multiple Docker hosts.
+    # macvlan	Creates a virtual Ethernet interface in the container.
+    # none	    Does not create a network for the container.
+    driver: bridge

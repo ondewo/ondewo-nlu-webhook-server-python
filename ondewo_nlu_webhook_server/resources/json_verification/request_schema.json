@@ -1,0 +1,113 @@
+{
+    "headers": {
+        "additionalProperties": false,
+        "patternProperties": {
+            "^.*$": {
+                "type": "string"
+            }
+        },
+        "type": "object"
+    },
+    "properties": {
+        "detectIntentRequest": {
+            "properties": {
+                "payload": {
+                    "type": "object"
+                }
+            },
+            "required": [
+                "payload"
+            ],
+            "type": "object"
+        },
+        "queryResult": {
+            "properties": {
+                "fulfillmentMessages": {
+                    "items": {
+                        "parameters": {
+                            "text": {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "fulfillmentText": {
+                    "type": "string"
+                },
+                "intent": {
+                    "properties": {
+                        "displayName": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "displayName"
+                    ],
+                    "type": "object"
+                },
+                "intentDetectionConfidence": {
+                    "type": "number"
+                },
+                "outputContexts": {
+                    "items": {
+                        "lifespanTime": {
+                            "type": "float"
+                        },
+                        "parameters": {
+                            "lifespanCount": "integer",
+                            "name": "string",
+                            "parameters": {
+                                "type": "object"
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "lifespanCount",
+                            "parameters"
+                        ],
+                        "type": "object"
+                    },
+                    "type": "array"
+                },
+                "parameters": {
+                    "type": "object"
+                },
+                "queryText": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "queryText",
+                "parameters",
+                "fulfillmentText",
+                "fulfillmentMessages",
+                "outputContexts",
+                "intent",
+                "intentDetectionConfidence"
+            ],
+            "type": "object"
+        },
+        "responseId": {
+            "type": "string"
+        },
+        "session": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "responseId",
+        "queryResult",
+        "detectIntentRequest",
+        "session"
+    ],
+    "type": "object"
+}

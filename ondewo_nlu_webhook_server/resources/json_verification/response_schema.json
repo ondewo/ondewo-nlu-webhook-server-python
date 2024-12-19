@@ -1,0 +1,67 @@
+{
+    "properties": {
+        "followupEventInput": {
+            "parameters": {
+                "languageCode": "string",
+                "name": "string",
+                "parameters": {
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "fulfillmentMessages": {
+            "items": {
+                "parameters": {
+                    "text": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "fulfillmentText": {
+            "type": "string"
+        },
+        "outputContexts": {
+            "items": {
+                "parameters": {
+                    "lifespanCount": "integer",
+                    "lifespanTime": {
+                        "type": "float"
+                    },
+                    "name": "string",
+                    "parameters": {
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "name",
+                    "lifespanCount",
+                    "parameters"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "payload": {
+            "type": "object"
+        },
+        "source": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "fulfillmentText",
+        "fulfillmentMessages",
+        "source",
+        "payload",
+        "outputContexts",
+        "followupEventInput"
+    ],
+    "type": "object"
+}
