@@ -104,11 +104,8 @@ COPY ./setup.py  .
 # Generate and add LIBRARIES.md
 RUN rm -f LIBRARIES.md && pip-licenses --from=mixed --with-system >> LIBRARIES.md
 
-# Set the PYTHONPATH environment variable globally for the container
-ENV PYTHONPATH=.:..
-
 # Start server.
-CMD ["python3", "ondewo_nlu_webhook_server/server/server.py"]
+CMD ["python3", "-m", "ondewo_nlu_webhook_server.server"]
 
 # Instantiate health check
 EXPOSE "$ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT"
@@ -140,14 +137,15 @@ RUN pip install -r requirements.txt
 # Compile Python files to shared objects (.so)
 RUN python setup.py build_ext --inplace
 
-# Remove unnecessary Python source files to minimize image size
-RUN find ./ondewo_nlu_webhook_server -name "*.py" -delete && \
-    find ./ondewo_nlu_webhook_server_custom_integration -name "*.py" -delete
+# Remove unnecessary python source files to minimize image size
+RUN find ./ondewo_nlu_webhook_server -type f \( -name "*.py" ! -name "__init__.py" ! -name "__main__.py" \
+    -o -name "__init__.c" -o -name "__init__.cpython-*.so" \
+    -o -name "__main__.c" -o -name "__main__.cpython-*.so" \) -delete && \
+    find ./ondewo_nlu_webhook_server_custom_integration -type f \( -name "*.py" ! -name "__init__.py" ! -name "__main__.py" \
+    -o -name "__init__.c" -o -name "__init__.cpython-*.so" \
+    -o -name "__main__.c" -o -name "__main__.cpython-*.so" \) -delete
 
-# Set the PYTHONPATH environment variable globally for the container
-ENV PYTHONPATH=.:..
-
-CMD ["python3", "ondewo_nlu_webhook_server/server/server.py"]
+CMD ["python3", "-m", "ondewo_nlu_webhook_server.server"]
 
 EXPOSE "$ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT"
 HEALTHCHECK --interval=1m --timeout=5s --retries=3 \

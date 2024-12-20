@@ -1,9 +1,31 @@
-# ONDEWO NLU Webhook Server Python
+<div align="center">
+  <table>
+    <tr>
+      <td>
+        <a href="https://ondewo.com/en/products/natural-language-understanding/">
+            <img width="400px" src="https://raw.githubusercontent.com/ondewo/ondewo-logos/master/ondewo_we_automate_your_phone_calls.png"/>
+        </a>
+      </td>
+    </tr>
+    <tr>
+        <td align="center">
+          <a href="https://www.linkedin.com/company/ondewo "><img width="40px" src="https://cdn-icons-png.flaticon.com/512/3536/3536505.png"></a>
+          <a href="https://www.facebook.com/ondewo"><img width="40px" src="https://cdn-icons-png.flaticon.com/512/733/733547.png"></a>
+          <a href="https://twitter.com/ondewo"><img width="40px" src="https://cdn-icons-png.flaticon.com/512/733/733579.png"> </a>
+          <a href="https://www.instagram.com/ondewo.ai/"><img width="40px" src="https://cdn-icons-png.flaticon.com/512/174/174855.png"></a>
+        </td>
+    </tr>
+  </table>
+  <h1>
+  ONDEWO NLU Webhook Server Python
+  </h1>
+</div>
 
 ## Introduction
 
-This repository contains a template to create a webhook server. The server is set up to receive json-formatted POST
-messages from `ondewo-nlu-cai` when an intent is matched for which the webhook call is activated.
+This repository contains a template to create the webhook server `ondewo-nlu-webhook-server-python`. The server is set
+up to receive json-formatted `POST` messages from `ondewo-nlu-cai` when an intent is matched for which the webhook call
+is activated.
 
 An example use-case would be a database query for parameter values, which are then sent back to `ondewo-nlu-cai`, or
 overwriting specific responses when a certain intent is active.
@@ -20,15 +42,15 @@ For details on these cases and integration of custom code, refer to the section 
 
 ### prerequisites
 
-To install the required python-packages, use:
+To install the required python libraries, use:
 
 > pip install --no-cache-dir -r requirements.txt
 
-or for ddevelopment
+or for development
 
 > make setup_developer_environment_locally
 
-### a note on testing
+### A note on testing
 
 The tests are conducted by containerizing the server and sending test requests to it. Apart from the python
 packages, `docker` and `docker-compose` need to be available, as well as the `docker` python sdk.

@@ -14,6 +14,11 @@
 # limitations under the License.
 
 SHELL=/bin/sh
+
+# Set MAKEFLAGS to include the silent option
+MAKEFLAGS += --silent
+CONFIGS_PATH:=$(shell pwd)/configs
+
 RELEASE_VERSION=$(shell cat ondewo_nlu_webhook_server/version.py | grep "__version__" | sed "s:__version__ = '::"  | sed "s:'::")
 
 PYPI_USERNAME?=ENTER_HERE_YOUR_PYPI_USERNAME
@@ -48,7 +53,7 @@ export
 #       ONDEWO Standard Make Targets
 ########################################################
 
-help: ## print usage info about help targets
+help: show_welcome ## print usage info about help targets
 	# ----------------------------------------------------------------------------------
 	# ONDEWO NLU Webhook Server Python - Available commands:
 	# ----------------------------------------------------------------------------------
@@ -59,13 +64,19 @@ help: ## print usage info about help targets
 makefile_chapters: ## Shows all sections of Makefile
 	@echo `cat Makefile| grep "########################################################" -A 1 | grep -v "########################################################"`
 
+show_welcome: ## Show ONDEWO Call Center AI (CCAI) Platform welcome message
+	@echo ""
+	@echo "#####################################################"
+	@echo "# Welcome to ONDEWO NLU Webhook Server Python ${RELEASE_VERSION}"
+	@echo "#####################################################"
+
 TEST: ## Prints some important variables
 	@echo "Release Notes: \n \n$(CURRENT_RELEASE_NOTES)"
 	@echo "GH Token: \t $(GITHUB_GH_TOKEN)"
 	@echo "NPM Name: \t $(NPM_USERNAME)"
 	@echo "NPM Password: \t $(NPM_PASSWORD)"
 
-setup_developer_environment_locally: install_apt install_submodules install_precommit_hooks install_dependencies_locally ## Sets the full environment to develop locally
+setup_developer_environment_locally: show_welcome install_apt install_submodules install_precommit_hooks install_dependencies_locally ## Sets the full environment to develop locally
 
 install_dependencies_locally: ## Install dependencies locally
 	pip install -r requirements-dev.txt
@@ -178,13 +189,107 @@ build_server_image_release: ## Build the image
 		--build-arg CACHEBUST=$$(date +%s) \
  		.
 
-run_ondewo_nlu_webhook_server_in_container:
+run_ondewo_nlu_webhook_server_release_in_container: show_welcome
+	@if [ ! -d "${ONDEWO_INGRESS_ENVOY_CERTS_PATH}" ]; then \
+		$(MAKE) run_ondewo_nlu_webhook_server_create_ssl_certificates; \
+	fi;
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env build
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env up --force-recreate --renew-anon-volumes
 
-run_ondewo_nlu_webhook_server_in_container_daemon:
+run_ondewo_nlu_webhook_server_release_in_container_daemon: show_welcome
+	@if [ ! -d "${ONDEWO_INGRESS_ENVOY_CERTS_PATH}" ]; then \
+		$(MAKE) run_ondewo_nlu_webhook_server_create_ssl_certificates; \
+	fi;
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env build
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env up -d --force-recreate --renew-anon-volumes
+
+run_ondewo_nlu_webhook_server_create_ssl_certificates: ## Creates ssl certificates
+	@echo "make up: Preparing ondewo-ingress: generating ssl certificates ..."
+	rm -rf ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}
+	mkdir -p ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}
+
+	@echo "  (1/9) Generate CA's private key and self-signed certificate ..."
+	openssl req \
+		-x509 \
+		-newkey rsa:4096 \
+		-days 365 -nodes \
+		-keyout ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-key.pem \
+		-out ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-cert.pem \
+		-subj "/C=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COUNTRY_CODE}/ST=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_STATE}/L=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_LOCALITY}/O=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION}/OU=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION_UNIT} Certificate Authority/CN=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COMMON_NAME}/emailAddress=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_E_MAIL}" \
+		> "/dev/null"
+	@echo "  ✔️ (1/9) Generate CA's private key and self-signed certificate"
+
+	@echo "  (2/9) CA's self-signed certificate ..."
+	openssl x509 -in ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-cert.pem -noout -text > "/dev/null"
+	@echo "  ✔️ (2/9) CA's self-signed certificate ..."
+
+	@echo "  (3/9) Generate web server's private key and certificate signing request (CSR) ..."
+	openssl req \
+		-newkey rsa:4096 \
+		-nodes \
+		-keyout ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-key.pem \
+		-out ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-req.pem \
+		-subj "/C=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COUNTRY_CODE}/ST=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_STATE}/L=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_LOCALITY}/O=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION}/OU=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION_UNIT} Certificate Authority/CN=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COMMON_NAME}/emailAddress=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_E_MAIL}" \
+		> "/dev/null"
+	@echo "  ✔️ (3/9) Generate web server's private key and certificate signing request (CSR)"
+
+	# Remember that when we develop on localhost, It’s important to add the IP:0.0.0.0 as an Subject Alternative Name (SAN) extension to the certificate.
+	@echo "subjectAltName=DNS:*.tls,DNS:localhost,IP:0.0.0.0" > ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-ext.cnf
+	# Or you can use localhost DNS and grpc.ssl_target_name_override variable
+	# echo "subjectAltName=DNS:localhost" > server-ext.cnf
+
+	@echo "  (4/9) Use CA's private key to sign web server's CSR and get back the signed certificate ..."
+	openssl x509 -req \
+		-in ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-req.pem \
+		-days 365 \
+		-CA ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-cert.pem \
+		-CAkey ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-key.pem \
+		-CAcreateserial \
+		-out ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-cert.pem \
+		-extfile ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-ext.cnf \
+		> "/dev/null"
+	@echo "  ✔️ (4/9) Use CA's private key to sign web server's CSR and get back the signed certificate"
+
+	@echo "  (5/9) Server's signed certificate ..."
+	openssl x509 \
+		-in ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/server-cert.pem \
+		-noout \
+		-text \
+		> "/dev/null"
+	@echo "  ✔️ (5/9) Server's signed certificate"
+
+	@echo "  (6/9) Generate client's private key and certificate signing request (CSR) ..."
+	openssl req \
+		-newkey rsa:4096 \
+		-nodes \
+		-keyout ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-key.pem \
+		-out ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-req.pem \
+		-subj "/C=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COUNTRY_CODE}/ST=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_STATE}/L=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_LOCALITY}/O=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION}/OU=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_ORGANISATION_UNIT} Certificate Authority/CN=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_COMMON_NAME}/emailAddress=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SSL_CERT_E_MAIL}" \
+		> "/dev/null"
+	@echo "  ✔️ (6/9) Generate client's private key and certificate signing request (CSR)"
+
+	# Remember that when we develop on localhost, It’s important to add the IP:0.0.0.0 as an Subject Alternative Name (SAN) extension to the certificate.
+	@echo "subjectAltName=DNS:*.client.com,IP:0.0.0.0" > ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-ext.cnf
+
+	@echo "  (7/9) Use CA's private key to sign client's CSR and get back the signed certificate ..."
+	openssl x509 -req \
+		-in ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-req.pem \
+		-days 60 \
+		-CA ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-cert.pem \
+		-CAkey ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/ca-key.pem \
+		-CAcreateserial -out ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-cert.pem \
+		-extfile ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-ext.cnf \
+		> "/dev/null"
+	@echo "  ✔️ (7/9) Use CA's private key to sign client's CSR and get back the signed certificate"
+
+	@echo "  (8/9) Client's signed certificate ..."
+	openssl x509 -in ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}/client-cert.pem -noout -text > "/dev/null"
+	@echo "  ✔️ (8/9) Client's signed certificate"
+
+	@echo "  (9/9) Setting correct permissions for certificates ..."
+	chmod go+r ${ONDEWO_INGRESS_ENVOY_CERTS_PATH} -R
+	@echo "  ✔️ (9/9) Setting correct permissions for certificates ..."
+	@echo "✔️ make up: Preparing ondewo-ingress-envoy: generating ssl certificates"
 
 ########################################################
 #		Release

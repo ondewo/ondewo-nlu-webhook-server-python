@@ -28,7 +28,6 @@ from typing import (
     Type,
 )
 
-from ondewo.logging.logger import logger_console as log
 from pydantic import (
     BaseModel,
     Field,
@@ -535,30 +534,3 @@ class WebhookRequest(BaseModel):
                 'header1': 'value1'
             }
         )
-
-    def extract_webhook_response(self) -> WebhookResponse:
-        """
-        create a WebhookResponse object from this WebhookResponse
-        all relevant values are copied apart from the empty values - source, payload and followupEventInput
-            source=""
-            payload={}
-            followupEventInput={}
-        """
-        assert self.queryResult.fulfillmentMessages
-        return WebhookResponse(
-            fulfillmentText=self.queryResult.fulfillmentText,
-            fulfillmentMessages=self.queryResult.fulfillmentMessages,
-            source='',
-            payload={},
-            outputContexts=self.queryResult.outputContexts,
-            followupEventInput=EventInput()
-        )
-
-
-if __name__ == '__main__':
-    request = WebhookRequest.create_sample_request()
-    response = request.extract_webhook_response()
-
-    # mixin not recognized by mypy -> type ignore
-    log.debug("Is the prototype  request valid?: ", WebhookRequest.model_validate(request))
-    log.debug("Is the prototype response valid?: ", WebhookResponse.model_validate(response))

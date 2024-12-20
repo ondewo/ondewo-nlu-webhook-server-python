@@ -28,20 +28,15 @@ A request is sent by ondewo-cai when an intent is matched where a webhook call i
 If server.py is called directly, it will create the server using flask itself with debugging activated.
 This is not recommended for production
 """
-import argparse
 import json
-import os
-import sys
 from json import JSONDecodeError
 from typing import (
     Dict,
-    List,
-    Tuple,
 )
 
 from fastapi import (
+    APIRouter,
     Depends,
-    FastAPI,
     HTTPException,
     Request,
 )
@@ -54,42 +49,31 @@ from ondewo.logging.decorators import Timer
 from ondewo.logging.logger import logger_console as log
 from pydantic_core import ValidationError
 from starlette import status
-from starlette.middleware.cors import CORSMiddleware  # type:ignore
 
 from ondewo_nlu_webhook_server.constants import CALL_CASES
 from ondewo_nlu_webhook_server.globals import WebhookGlobals
 from ondewo_nlu_webhook_server.server.base_models import (
+    EventInput,
     WebhookRequest,
     WebhookResponse,
 )
 from ondewo_nlu_webhook_server.server.relay import call_custom_code
-from ondewo_nlu_webhook_server.version import __version__
+
+router = APIRouter()
 
 welcome_message: str = "Welcome from ondewo-nlu-webhook-server-python! If you see this message, your webhook is active."
-app = FastAPI()
-
-# region: CORS middleware: used for local debugging to prevent CORS errors
-app.add_middleware(
-    CORSMiddleware,  # type: ignore
-    allow_origins=["*"],  # Allow all origins (use specific origins in production)
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],  # Restrict to necessary methods
-    allow_headers=["*"],  # Allow all headers
-)
-# endregion: CORS middleware
-
 # region security: Bearer authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def verify_token(token: str = Depends(oauth2_scheme)) -> str:
+def verify_token(token=Depends(oauth2_scheme)) -> str:  # type:ignore
     if token != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return token
+    return token  # type:ignore
 
 
 # endregion security: Bearer authentication
@@ -98,7 +82,7 @@ def verify_token(token: str = Depends(oauth2_scheme)) -> str:
 security = HTTPBasic()
 
 
-def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)) -> HTTPBasicCredentials:
+def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  # type:ignore
     if (
         credentials.username != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
         or credentials.password != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
@@ -108,12 +92,12 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)) ->
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials
+    return credentials  # type:ignore
 
 
 # endregion security: Http Basic authentication
 
-@app.post("/{call_case}", response_model=WebhookResponse)
+@router.post("/{call_case}", response_model=WebhookResponse)
 @Timer(logger=log.debug, log_arguments=True, message='call_case. Elapsed time: {:.5f}')
 async def call_case(
     call_case: str,
@@ -209,7 +193,17 @@ async def call_case(
     # set headers of request into the WebhookRequest object
     webhook_request.headers = dict(request.headers)
 
-    webhook_response: WebhookResponse = webhook_request.extract_webhook_response()
+    webhook_response: WebhookResponse = WebhookResponse(
+        fulfillmentText=webhook_request.queryResult.fulfillmentText,
+        fulfillmentMessages=(
+            webhook_request.queryResult.fulfillmentMessages
+            if webhook_request.queryResult.fulfillmentMessages else []
+        ),
+        source='',
+        payload={},
+        outputContexts=webhook_request.queryResult.outputContexts,
+        followupEventInput=EventInput(),
+    )
 
     intent_display_name = webhook_request.queryResult.intent.displayName
     session_id = webhook_request.session
@@ -228,7 +222,7 @@ async def call_case(
 
 
 # async def index(_: str = Depends(get_current_user)) -> Dict[str, str]:
-@app.get("/")
+@router.get("/")
 @Timer(logger=log.debug, log_arguments=False, message='index. Elapsed time: {:.5f}')
 async def index() -> Dict[str, str]:
     """
@@ -237,69 +231,6 @@ async def index() -> Dict[str, str]:
     return {"message": welcome_message}
 
 
-@app.get("/health")
+@router.get("/health")
 def health_check() -> Dict[str, str]:
     return {"status": "ok"}
-
-
-if __name__ == "__main__":
-    # Update system path to include the parent directory
-    sys.path.append(os.path.abspath(os.path.join(__file__, "../..")))
-
-    # Set up argument parser
-    parser = argparse.ArgumentParser(description="ONDEWO NLU Webhook Server")
-
-    parser.add_argument(
-        "-p",
-        "--port",
-        help="Port of the ONDEWO NLU Webhook Server.",
-        default=int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", "8000")),
-        type=int,
-        required=False,
-    )
-    parser.add_argument(
-        "-ht",
-        "--host",
-        help="Host of the ONDEWO NLU Webhook Server.",
-        default=os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0"),
-        required=False,
-    )
-
-    # Display startup information
-    info_string = (
-        "\n\n\n Welcome to ... \n\n"
-        "-----------------------------------------------------------------\n"
-        "--- ONDEWO NLU Webhook Server Python ---\n"
-        f"--- Version: {__version__} ---\n"
-        "-----------------------------------------------------------------\n"
-    )
-    log.debug(info_string)
-
-    # Print environment variables
-    try:
-        env_string = (
-            "\n"
-            "----------------------------------------------------------\n"
-            "------------------------ ENVIRONMENT ---------------------\n"
-            "----------------------------------------------------------\n"
-        )
-        env_items: List[Tuple[str, str]] = sorted(os.environ.items(), key=lambda environment: environment[0])
-        for key, value in env_items:
-            env_string += f"{key}={value}\n"
-        env_string += (
-            "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
-            "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
-            "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
-        )
-        log.debug(f"ENVIRONMENT: Environment variables:\n{env_string}")
-
-    except Exception as e:
-        log.error(f"ENVIRONMENT: Could not print environment variables! Exception: {e}")
-
-    # Parse command-line arguments
-    args = parser.parse_args()
-
-    # Start the server
-    import uvicorn
-
-    uvicorn.run("server:app", host=args.host, port=args.port, reload=True)

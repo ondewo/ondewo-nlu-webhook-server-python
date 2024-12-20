@@ -14,16 +14,21 @@
 
 services:
 
+  # ----------------------------------------------------------------------
+  # Service: ondewo-nlu-webhook-server-python
+  # ----------------------------------------------------------------------
   ondewo-nlu-webhook-server-python:
     build:
       dockerfile: dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile
       context: .
-      target: uncythonized
+      target: cythonized # compile python code to Objective-C for speed improvements. Best for production.
+      # target: uncythonized # run python code. Best for debugging.
       args:
         HOST_DOCKER_GID: ${HOST_DOCKER_GID}  # check *your* docker group id with: `getent group docker`
     networks:
       - ondewo-nlu-webhook-server-python-network
     ports:
+      # Note: comment the following line to prevent accessing the webhook server without ssl via envoy
       - ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}
     environment:
       - HOST_DOCKER_GID
@@ -40,8 +45,32 @@ services:
       retries: 20
     restart: unless-stopped
 
+  # ----------------------------------------------------------------------
+  # Service: ondewo-ingress-envoy
+  # ----------------------------------------------------------------------
+  ondewo-ingress-envoy:
+    image: ${ONDEWO_INGRESS_ENVOY_IMAGE_NAME}
+    volumes:
+      - ${ONDEWO_INGRESS_ENVOY_CONFIG_FILE}:/etc/envoy/envoy.yaml
+      - ${ONDEWO_INGRESS_ENVOY_CERTS_PATH}:/etc/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - ondewo-nlu-webhook-server-python-network
+    dns:
+      - 127.0.0.11
+    healthcheck:
+      test: [ "CMD-SHELL", "test -n 'ps aux | grep envoy'" ]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
 networks:
 
+  # ----------------------------------------------------------------------
+  # Network: ondewo-nlu-webhook-server-python-network
+  # ----------------------------------------------------------------------
   ondewo-nlu-webhook-server-python-network:
     name: ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_DOCKER_NETWORK_NAME}
     # bridge	Creates a new network that is isolated from the host network.
