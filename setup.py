@@ -78,7 +78,7 @@ setup(
     description='ONDEWO NLU Webhook Server Python',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://bitbucket.org/ondewo/ondewo-nlu-webhook-server-python',
+    url='https://github.com/ondewo/ondewo-nlu-webhook-server-python',
     packages=[package for package in find_packages() if not package.startswith('test')],
     ext_modules=cythonize(
         extensions,
