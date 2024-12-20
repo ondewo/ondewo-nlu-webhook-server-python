@@ -28,7 +28,7 @@ from ondewo_nlu_webhook_server.server.base_models import WebhookRequest
 def valid_request_data() -> Dict[str, Any]:
     """Fixture for valid request data."""
     webhook_request: WebhookRequest = WebhookRequest.create_sample_request()
-    return webhook_request.model_dump()  # serialize to json
+    return webhook_request.model_dump()  # type:ignore # serialize to json
 
 
 @pytest.fixture

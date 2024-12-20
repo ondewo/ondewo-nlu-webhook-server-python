@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12-slim as code_checks
+FROM python:3.13-slim as code_checks
 
 # Install some useful apps in the image.
 RUN apt update && apt upgrade -y && apt install -y \

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12-slim AS base
+FROM python:3.13-slim AS base
 
 # Get GRPCurl
 COPY --from=fullstorydev/grpcurl:latest /bin/grpcurl /usr/local/bin/
@@ -34,12 +34,14 @@ ENV LANG=C.UTF-8
 # group ID in the image.
 # See article at https://maze88.dev/docker-socket-from-within-containers.html
 ARG HOST_DOCKER_GID
-RUN addgroup --gid $HOST_DOCKER_GID docker  && newgrp docker && groupmod -g $HOST_DOCKER_GID docker && newgrp docker && usermod -aG docker root
+RUN addgroup --gid $HOST_DOCKER_GID docker  \
+    && newgrp docker \
+    && groupmod -g $HOST_DOCKER_GID docker \
+    && newgrp docker \
+    && usermod -aG docker root
 
 # install required software packages
 RUN apt update && apt upgrade -y && apt install -y \
-    python3 \
-    python3-pip \
     iputils-ping \
     gcc \
     git \
@@ -99,13 +101,54 @@ COPY ./LICENSE.md .
 COPY ./setup.cfg .
 COPY ./setup.py  .
 
-# Generatre and add LIBRARIES.md
+# Generate and add LIBRARIES.md
 RUN rm -f LIBRARIES.md && pip-licenses --from=mixed --with-system >> LIBRARIES.md
 
+# Set the PYTHONPATH environment variable globally for the container
+ENV PYTHONPATH=.:..
+
 # Start server.
-CMD PYTHONPATH=. python3 ondewo_nlu_webhook_server/server/server.py
+CMD ["python3", "ondewo_nlu_webhook_server/server/server.py"]
 
 # Instantiate health check
+EXPOSE "$ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT"
+HEALTHCHECK --interval=1m --timeout=5s --retries=3 \
+  CMD curl -f http://localhost:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}/health || exit 1
+
+########################################################################################
+# CYTHONIZED IMAGE
+########################################################################################
+FROM base AS cythonized
+
+# Install build dependencies
+RUN pip install --upgrade pip && pip install cython setuptools wheel
+
+# Copy source code for compilation
+COPY ./ondewo_nlu_webhook_server ./ondewo_nlu_webhook_server
+COPY ./ondewo_nlu_webhook_server_custom_integration ./ondewo_nlu_webhook_server_custom_integration
+COPY ./requirements.txt .
+COPY ./requirements-ondewo-clients.txt .
+COPY ./RELEASE.md .
+COPY ./README.md .
+COPY ./LICENSE.md .
+COPY ./setup.cfg .
+COPY ./setup.py  .
+
+# Install dependencies for building
+RUN pip install -r requirements.txt
+
+# Compile Python files to shared objects (.so)
+RUN python setup.py build_ext --inplace
+
+# Remove unnecessary Python source files to minimize image size
+RUN find ./ondewo_nlu_webhook_server -name "*.py" -delete && \
+    find ./ondewo_nlu_webhook_server_custom_integration -name "*.py" -delete
+
+# Set the PYTHONPATH environment variable globally for the container
+ENV PYTHONPATH=.:..
+
+CMD ["python3", "ondewo_nlu_webhook_server/server/server.py"]
+
 EXPOSE "$ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT"
 HEALTHCHECK --interval=1m --timeout=5s --retries=3 \
   CMD curl -f http://localhost:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}/health || exit 1

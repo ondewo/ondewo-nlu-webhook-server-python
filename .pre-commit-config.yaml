@@ -55,7 +55,7 @@ repos:
         args: [ --pytest-test-first ]
         exclude: (^tests/pytest_utils/plugins)
       - id: requirements-txt-fixer  # Sorts the requirement.txt files' content
-        files: 'requirements.*\.txt$'
+        files: 'requirements*\.txt$'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0
