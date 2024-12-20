@@ -21,7 +21,7 @@ permissions:
 jobs:
 
   # Job: Pre-commit hooks validation
-  pre-commit:
+  job-pre-commit-checks:
     runs-on: ubuntu-latest
     steps:
       # Step 1: Check out the code
@@ -45,7 +45,8 @@ jobs:
         uses: pre-commit/action@v3.0.1
 
   # Job: Build and test
-  build_and_test:
+  job-build-and-test:
+    needs: job-pre-commit-checks
     runs-on: ubuntu-latest
     services:
       docker: # Enable Docker service for running containerized tests
@@ -85,8 +86,8 @@ jobs:
       # Step 5: Install Docker for e2e testing
       - name: Install Docker
         run: |
-          apt-get update
-          apt-get install -y docker.io
+          sudo apt-get update
+          sudo apt-get install -y docker.io
 
       # Step 6: Run end-to-end tests
       - name: Run end-to-end tests
