@@ -1,64 +1,100 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+# Workflow: Build and Test ondewo-nlu-webhook-server-python
+#
+# This workflow automates the process of building, linting, and testing the
+# ondewo-nlu-webhook-server-python project. It runs pre-commit hooks, performs
+# linting using flake8, and executes unit, integration, and end-to-end tests.
+#
+# For more information, see:
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: Build and test ondewo-nlu-webhook-server-python
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master" ] # Trigger workflow on pushes to the master branch
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master" ] # Trigger workflow on pull requests targeting the master branch
 
 permissions:
-  contents: read
+  contents: read # Allow read access to repository contents
 
 jobs:
-  build:
 
+  # Job: Pre-commit hooks validation
+  pre-commit:
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
-        ports:
-          - 2375:2375
     steps:
-      - uses: actions/checkout@v4
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
+      # Step 2: Set up Python environment for pre-commit hooks
+      - name: Set up Python 3.13
         uses: actions/setup-python@v3
         with:
-          python-version: "3.12"
+          python-version: "3.13" # Specify Python version
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install -r requirements-static-code-checks.txt
 
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --config dockerfiles/code_checks/.flake8 --count --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --config dockerfiles/code_checks/.flake8 --count --exit-zero --statistics
+      # Step 4: Run pre-commit hooks
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.1
 
-      - name: webhook_server_tests_unit_int.sh
+  # Job: Build and test
+  build_and_test:
+    runs-on: ubuntu-latest
+    services:
+      docker: # Enable Docker service for running containerized tests
+        image: docker:dind
+        options: --privileged
+        ports:
+          - 2375:2375 # Expose Docker daemon port
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.13" # Specify Python version
+
+      # Step 3: Install dependencies: requirements-dev.txt
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # Step 4: Run unit and integration tests
+      - name: Run unit and integration tests
+        run: |
+          # Export environment variables for tests
           set -a
           source envs/local.env
           set +a
           export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          # Execute the unit and integration test script
           tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh tests/ondewo_nlu_webhook_server
 
+      # Step 5: Install Docker for e2e testing
       - name: Install Docker
         run: |
           apt-get update
           apt-get install -y docker.io
 
-      - name: webhook_server_tests_e2e.sh
+      # Step 6: Run end-to-end tests
+      - name: Run end-to-end tests
         run: |
+          # Export environment variables for tests
           set -a
           source envs/local.env
           set +a
           export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          # Execute the e2e test script
           tests/pytest_utils/scripts/webhook_server_tests_e2e.sh tests/e2e
