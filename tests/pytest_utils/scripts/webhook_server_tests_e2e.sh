@@ -34,15 +34,15 @@ args="$args --reruns 1"
 args="$args --reruns-delay 5"
 
 # xdist
-#args="$args --debug"
-args="$args --dist=loadscope"
-#args="$args --dist=worksteal"
-args="$args -d --tx popen//python=python3.12"
+# args="$args --debug"
+# args="$args --dist=loadscope"
+# args="$args --dist=worksteal"
+# args="$args -d --tx popen//python=python3.13"
+# args="$args -n 1"
 
 # specific pytest options
 args="$args --cov-report xml:coverage/coverage-${escaped_arg_1}.xml"
 args="$args --junit-xml=junit/pytest_e2e-${escaped_arg_1}.xml"
-args="$args -n 1"
 
 echo "START: ------------------------- PYTEST ARGS --------------------------"
 echo "pytest $args $1"
