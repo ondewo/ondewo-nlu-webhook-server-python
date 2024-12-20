@@ -44,8 +44,8 @@ jobs:
       - name: Run pre-commit hooks
         uses: pre-commit/action@v3.0.1
 
-  # Job: Build and test
-  job-build-and-test:
+  # Job: Build and test unit and integration tests
+  job-build-and-test-unit-int:
     needs: job-pre-commit-checks
     runs-on: ubuntu-latest
     services:
@@ -83,14 +83,42 @@ jobs:
           # Execute the unit and integration test script
           tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh tests/ondewo_nlu_webhook_server
 
-      # Step 5: Install Docker for e2e testing
+  # Job: Build and test unit and integration tests
+  job-build-and-test-e2e:
+    needs: job-pre-commit-checks
+    runs-on: ubuntu-latest
+    services:
+      docker: # Enable Docker service for running containerized tests
+        image: docker:dind
+        options: --privileged
+        ports:
+          - 2375:2375 # Expose Docker daemon port
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.13" # Specify Python version
+
+      # Step 3: Install dependencies: requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # Step 4: Install Docker for e2e testing
       - name: Install Docker
         run: |
-          sudo apt-get remove containerd
+          sudo apt-get remove containerd containerd.io
           sudo apt-get update
           sudo apt-get install -y docker.io
 
-      # Step 6: Run end-to-end tests
+      # Step 5: Run end-to-end tests
       - name: Run end-to-end tests
         run: |
           # Export environment variables for tests
