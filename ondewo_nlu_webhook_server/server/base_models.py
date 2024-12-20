@@ -460,7 +460,7 @@ class WebhookRequest(BaseModel):
         session                                # session ID
         headers                                # optional, list of headers sent with the request
     """
-    headers: Optional[Dict[str, str]] = Field(default_factory=dict)
+    headers: Optional[Dict[str, str]] = Field(default_factory=dict)  # type:ignore
     detectIntentRequest: OriginalDetectIntentRequest
     queryResult: QueryResult
     responseId: str
