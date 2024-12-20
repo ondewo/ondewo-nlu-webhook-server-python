@@ -19,8 +19,8 @@ from typing import (
 
 from fastapi.testclient import TestClient
 
+from ondewo_nlu_webhook_server.server.__main__ import app
 from ondewo_nlu_webhook_server.server.base_models import WebhookResponse
-from ondewo_nlu_webhook_server.server.server import app
 
 client = TestClient(app)
 
