@@ -103,4 +103,4 @@ args = parser.parse_args()
 
 # Start the server
 
-uvicorn.run("main:app", host=args.host, port=args.port, reload=False)
+uvicorn.run("__main__:app", host=args.host, port=args.port, reload=False)
