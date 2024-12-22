@@ -126,11 +126,8 @@ class TestWebhookServerE2e:
             json=request.json(),
             verify=False,
         )
-        try:
-            response_dict: Dict[str, Any] = response_obj.json()
-            json.dumps(response_dict)
-        except ValueError:
-            pytest.fail("response could not be json formatted")
+        response_dict: Dict[str, Any] = response_obj.json()
+        json.dumps(response_dict)
 
         # response-dictionary structure validation
         assert WebhookResponse.model_validate(response_dict)  # type:ignore
