@@ -30,9 +30,7 @@ This is not recommended for production
 """
 import json
 from json import JSONDecodeError
-from typing import (
-    Dict,
-)
+from typing import Dict
 
 from fastapi import (
     APIRouter,
@@ -58,10 +56,16 @@ from ondewo_nlu_webhook_server.server.base_models import (
     WebhookResponse,
 )
 from ondewo_nlu_webhook_server.server.relay import call_custom_code
+from ondewo_nlu_webhook_server.version import __version__
 
 router = APIRouter()
 
-welcome_message: str = "Welcome from ondewo-nlu-webhook-server-python! If you see this message, your webhook is active."
+# welcome message
+welcome_message: str = (
+    f"Welcome to ONDEWO NLU Webhook Server Python {__version__}! "
+    "GitHub: https://github.com/ondewo/ondewo-nlu-webhook-server-python"
+)
+
 # region security: Bearer authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 

@@ -21,7 +21,7 @@ services:
     build:
       dockerfile: dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile
       context: .
-      target: cythonized # compile python code to Objective-C for speed improvements. Best for production.
+      target: ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_TARGET} # compile python code to Objective-C for speed improvements. Best for production.
       # target: uncythonized # run python code. Best for debugging.
       args:
         HOST_DOCKER_GID: ${HOST_DOCKER_GID}  # check *your* docker group id with: `getent group docker`
@@ -31,13 +31,16 @@ services:
       # Note: comment the following line to prevent accessing the webhook server without ssl via envoy
       - ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}
     environment:
+      # Analytics variables
       - HOST_DOCKER_GID
-      - MODULE_NAME
+      - MODULE_NAME=${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_MODULE_NAME}
+      # Service environment variables
       - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST
       - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT
       - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
       - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
       - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER
+      - ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_NR_OF_WORKERS
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}/health || exit 1" ]
       interval: 10s

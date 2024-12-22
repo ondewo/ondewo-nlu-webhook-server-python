@@ -148,7 +148,7 @@ create_libraries_md:
 		--rm \
 		--user $(id -u):$(id -g) \
 		-v ${PWD}:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_APP_DIR} \
-		${DOCKERREGISTRY}/${NAMESPACE}/ondewo-nlu-webhook-server-python-release:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_TAG} /bin/bash -c 'rm -f LIBRARIES.md && pip-licenses --from=mixed --with-system >> LIBRARIES.md'
+		${DOCKERREGISTRY}/${NAMESPACE}/ondewo-nlu-webhook-server-python-release:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_VERSION} /bin/bash -c 'rm -f LIBRARIES.md && pip-licenses --from=mixed --with-system >> LIBRARIES.md'
 	@echo "LIBRARIES.md file updated"
 
 curl_docker_socket:
