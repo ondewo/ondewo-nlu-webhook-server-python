@@ -28,6 +28,7 @@ from typing import (
 
 import pytest
 import requests
+from ondewo.logging.logger import logger_console as log
 
 from ondewo_nlu_webhook_server.server.base_models import (
     WebhookRequest,
@@ -138,8 +139,12 @@ class TestWebhookServerE2e:
             json=request.model_dump_json(),
             verify=False,
         )
+        log.debug(f"response_obj: {response_obj}")
         response_dict: Dict[str, Any] = response_obj.json()
+        log.debug(f"response_dict: response_obj.json(): {response_obj.json()}")
+
         json.dumps(response_dict)
+        log.debug(f"json.dumps(response_dict): {json.dumps(response_dict)}")
 
         # response-dictionary structure validation
         assert WebhookResponse.model_validate(response_dict)
