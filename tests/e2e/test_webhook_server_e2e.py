@@ -108,29 +108,41 @@ class TestWebhookServerE2e:
         headers: Dict[str, str],
     ) -> WebhookResponse:
         """
-        send the request to the webhook server, asserts if the response has a valid structure and returns it
+        Sends a request to the webhook server, validates the response structure, and returns it.
+
+        This method sends a request to the specified webhook server, validates that the response
+        contains the expected structure, and returns the validated response.
 
         Args:
-            request: request sent to webhook server
-            server_url: webhook server url
-            server_function: either "slot_filling" or "last_minute_check"
+            request (WebhookRequest):
+                The request data to be sent to the webhook server.
+            server_url (str):
+                The URL of the webhook server.
+            server_function (str):
+                The function to be invoked on the server, typically "slot_filling" or "last_minute_check".
+            headers (Dict[str, str]):
+            A dictionary containing headers to be included in the request.
 
         Returns:
-            response from webhook server
+            WebhookResponse: The validated response from the webhook server.
+
+        Raises:
+            ValueError: If the response structure is invalid.
+            ConnectionError: If there is an issue connecting to the webhook server.
         """
         # send request to webhook server
         # mixin not recognized by mypy -> type ignore
         response_obj = requests.post(
             url=server_url + "/" + server_function,
             headers=headers,
-            json=request.json(),
+            json=request.model_dump_json(),
             verify=False,
         )
         response_dict: Dict[str, Any] = response_obj.json()
         json.dumps(response_dict)
 
         # response-dictionary structure validation
-        assert WebhookResponse.model_validate(response_dict)  # type:ignore
+        assert WebhookResponse.model_validate(response_dict)
 
         # assign WebhookResponse dataclass
         response: WebhookResponse = WebhookResponse(**response_dict)
