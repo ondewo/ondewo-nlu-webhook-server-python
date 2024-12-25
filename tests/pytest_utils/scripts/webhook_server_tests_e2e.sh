@@ -30,8 +30,8 @@ args="$args --cov"
 args="$args --cov-append"
 
 # rerun failed tests x times with a delay of y
-args="$args --reruns 1"
-args="$args --reruns-delay 5"
+# args="$args --reruns 1"
+# args="$args --reruns-delay 5"
 
 # xdist
 # args="$args --debug"

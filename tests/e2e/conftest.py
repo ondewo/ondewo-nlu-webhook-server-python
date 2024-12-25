@@ -101,6 +101,7 @@ def webhook_server_for_testing() -> Generator:
         dockerfile="dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile",
         rm=True,
         forcerm=True,
+        target="cythonized",
         tag=IMAGE_TAG,  # Correctly use image_tag here
         buildargs={"HOST_DOCKER_GID": os.getenv("HOST_DOCKER_GID")},
     )
