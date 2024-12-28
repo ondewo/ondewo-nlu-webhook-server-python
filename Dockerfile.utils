@@ -49,7 +49,7 @@ COPY .pre-commit-config.yaml .
 
 COPY CONTRIBUTING.md .
 
-COPY LICENSE .
+COPY LICENSE.md .
 
 COPY MANIFEST.in .
 
@@ -65,7 +65,9 @@ COPY README.md .
 
 COPY RELEASE.md .
 
-COPY ondewo ondewo
+COPY ondewo_nlu_webhook_server ondewo_nlu_webhook_server
+
+COPY ondewo_nlu_webhook_server_custom_integration ondewo_nlu_webhook_server
 
 # run the container forever
 CMD tail -f /dev/null

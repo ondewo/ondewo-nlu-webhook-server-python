@@ -339,8 +339,8 @@ release: ## Automate the entire release process
 	git push
 	make create_release_branch
 	make create_release_tag
-	make release_to_github_via_docker_image
-	make push_to_pypi_via_docker_image
+	make release_to_github_via_docker
+	make push_to_pypi_via_docker
 	@echo "Release Finished"
 
 create_release_branch: ## Create Release Branch and push it to origin
@@ -388,6 +388,10 @@ clear_package_data: ## Clears PYPI Package
 	echo "Waiting 5s so directory for removal is not busy anymore"
 	sleep 5s
 	-rm -rf build dist ondewo_nlu_client.egg-info
+
+push_to_pypi_via_docker: push_to_pypi_via_docker_image  ## Release automation for building and pushing to pypi via a docker image
+
+release_to_github_via_docker: build_utils_docker_image release_to_github_via_docker_image  ## Release automation for building and releasing on GitHub via a docker image
 
 build_utils_docker_image:  ## Build utils docker image
 	docker build -f Dockerfile.utils -t ${IMAGE_UTILS_NAME} .
