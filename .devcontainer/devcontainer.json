@@ -4,19 +4,40 @@
     "dockerfile": "Dockerfile"
   },
   "extensions": [
+    "donjayamanne.githistory",
+    "donjayamanne.python-environment-manager",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "hbenl.vscode-test-explorer",
+    "markipad.vscode-test-adapter",
+    "mhutchie.git-graph",
+    "mikestead.dotenv",
+    "ms-azuretools.vscode-docker",
+    "ms-python.flake8",
+    "ms-python.pytest",
+    "ms-python.python-test-adapter",
     "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-toolsai.jupyter-renderers",
     "ms-toolsai.jupyter",
-    "esbenp.prettier-vscode"
+    "ms-vscode.test-adapter-converter"
   ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false,
+      "version": "latest"
+    }
+  },
   "mounts": [
-    "type=bind,source=${localWorkspaceFolder},target=/workspace"
+    "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python"
   ],
   "name": "ondewo-nlu-webhook-server-python-dev-container",
+  "postCreateCommand": "make setup_developer_environment_in_devcontainer",
   "remoteUser": "vscode",
   "settings": {
     "editor.formatOnSave": true,
     "python.defaultInterpreterPath": "/usr/local/bin/python",
     "terminal.integrated.defaultProfile.linux": "bash"
   },
-  "workspaceFolder": "/workspace"
+  "workspaceFolder": "/github/ondewo-nlu-webhook-server-python"
 }

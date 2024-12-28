@@ -76,7 +76,9 @@ TEST: ## Prints some important variables
 	@echo "NPM Name: \t $(NPM_USERNAME)"
 	@echo "NPM Password: \t $(NPM_PASSWORD)"
 
-setup_developer_environment_locally: show_welcome install_apt install_submodules install_precommit_hooks install_dependencies_locally ## Sets the full environment to develop locally
+setup_developer_environment_locally: show_welcome install_apt install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop locally
+
+setup_developer_environment_in_devcontainer: show_welcome install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop locally
 
 install_dependencies_locally: ## Install dependencies locally
 	pip install -r requirements-dev.txt
@@ -101,7 +103,11 @@ install_apt:
 
 install_precommit_hooks: ## Installs pre-commit hooks and sets them up for the ondewo-csi-client repo
 	-pip install pre-commit
-	-conda -y install pre-commit
+	-@if command -v conda > /dev/null 2>&1; then \
+		conda -y install pre-commit; \
+	else \
+		echo "Conda not found, skipping conda pre-commit hook setup."; \
+	fi
 	pre-commit install
 	pre-commit install --hook-type commit-msg
 
