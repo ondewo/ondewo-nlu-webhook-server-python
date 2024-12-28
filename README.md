@@ -65,11 +65,13 @@ packages, `docker` and `docker-compose` need to be available, as well as the `do
 
 ### SSL Certificates
 
-The webhook server is built to be deployed using SSL. The certificate files `cert.pem` and `key.pem` need to be provided
-in the folder `/src/certificates`.
+The webhook server is built to be deployed using SSL via envoy. The certificate files `cert.pem` and `key.pem` need to
+be provided in the folder `configs/ondewo-ingress/ondewo-ingress-envoy/certs`. The envoy configuration file `envoy.yaml`
+is provided in the folder `configs/ondewo-ingress/ondewo-ingress-envoy/envoy.yaml`.
 
 A `Makefile` is included in the repository to generate self-signed certificates sufficient for local deployment. To
-generate them run the command `make create_ssl_certificates` in the repository's root directory.
+generate them run the command `make run_ondewo_nlu_webhook_server_create_ssl_certificates` in the repository's root
+directory.
 
 ### Docker
 
@@ -78,42 +80,33 @@ in the repo.
 
 To start the docker image, run:
 
-> docker-compose up
+> make run_ondewo_nlu_webhook_server_release_in_container
+
+or as daemon
+
+> make run_ondewo_nlu_webhook_server_release_in_container_daemon
 
 This will deploy the server in a docker container at https://127.0.0.1:5678.
 
 ### Local deploy
 
-`/src/webhook_server.py` contains the code for the server. (Local) deployment of the server can be done with `gunicorn`:
+`server/__main__.py` contains the code for the server. (Local) deployment of the server can be done with `uvicorn`:
 
-> gunicorn -b 0.0.0.0:5678 src.webhook_server:app
+```python
+import uvicorn
 
-To activate debugging set the  `--log-level=debug` flag.
+uvicorn.run(
+    app="ondewo_nlu_webhook_server.server.__main__:app",
+    host="0.0.0.0",
+    port=50091,
+    reload=False,  # Disable reload in production
+    log_level="info",  # Reduce log verbosity
+    workers=1,  # Use multiple workers for better concurrency
+    access_log=False,  # Disable access logs for speed (enable if needed)
+)
+```
 
-> gunicorn -b 0.0.0.0:5678 --log-level=debug src.webhook_server:app
-
-This will deploy the server to http://localhost:5678 (or http://127.0.0.1:5678).
-
-A self-signed SSL certificate is provided in the home folder. To deploy with SSL use:
-
-> gunicorn --log-level=debug --certfile ./cert.pem --keyfile ./key.pem -b 0.0.0.0:5678 src.webhook_server:app
-
-This will deploy the server to https://localhost:5678 (or https://127.0.0.1:5678):
-
-![](ondewo_nlu_webhook_server/resources/server_active.png)
-
-**possible but not recommended**:
-
-If `python webhook_server.py` is called it will use the server included in the flask package to start the server
-locally, which is useful for debugging. Debug mode will be active. The same thing can be achieved like this:
-
-> export FLASK_APP=webhook_server.py
->
-> export FLASK_ENV=develop
->
-> flask run
-
-## Deploy to public IP address
+### Deploy to public IP address
 
 For quickly streaming the local server to a public IP, `ngrok` can be used.
 
@@ -121,18 +114,19 @@ How to install on Linux: https://dashboard.ngrok.com/get-started/setup
 
 When `ngrok` is installed, run this for the unencrypted local server:
 
-> ./ngrok http 5678
+> ./ngrok http 50091
 
 or this command for SSL-encrypted local server:
 
-> ./ngrok http https://localhost:5678
+> ./ngrok http https://localhost:50091
 
 This will stream the local server deployment to a randomly-generated public address. Note that ngrok is used in free
 mode.
 
 ## Testing: server deployment and function
 
-`tests/test_webhook_server.py` tests whether a connection to the webhook server can be established and whether the
+`[tests/ondewo_nlu_webhook_server/server/test_server_unit.py](tests/ondewo_nlu_webhook_server/server/test_server_unit.py)`
+tests whether a connection to the webhook server can be established and whether the
 response matches the expected format. The server is automatically deployed with `docker` (build+run) when the tests are
 run. After a successful run the container is closed and the images are deleted.
 
@@ -148,7 +142,7 @@ run. After a successful run the container is closed and the images are deleted.
 
 ## Custom Code Integration
 
-Custom code can be added to **CUSTOM_CODE.py**.
+Custom code can be added to `ondewo_nlu_webhook_server_custom_integration/custom_integration.py`.
 
 All intents for which the webhook call is activated need to be listed in `active_intents` at the top of the file. Either
 the `displayName` or the `intent ID` can be specified. Both `slot_filling()` and `response_refinement()` will not be
@@ -157,10 +151,12 @@ changes, with the relevant fields of the request copied to the response.
 
 There are different functionalities available depending on the call:
 
-### slot filling
+#### slot_filling
 
-Slot filling is called by `ondewo-cai` when a webhook call as well as slot filling is activated for a matched intent.
-The goal is to supply `ondewo-cai` with parameter values and additional context information (or context deletion). The
+Slot filling is called by `ondewo-nlu-cai` when a webhook call as well as slot filling is activated for a matched
+intent.
+The goal is to supply `ondewo-nlu-cai` with parameter values and additional context information (or context deletion).
+The
 POST message is sent to `[server-IP]/slot_filling`
 
 The following functionality is available in `slot_filling()` in **CUSTOM_CODE.py**:
@@ -169,10 +165,11 @@ The following functionality is available in `slot_filling()` in **CUSTOM_CODE.py
 
 - changes to active contexts
 
-### response refinement
+#### response_refinement
 
-Response refinement is called by `ondewo-cai` when a webhook call is activated for a matched intent. The goal is to have
-a last chance at changing the fulfillment messages that were generated by `ondewo-cai`. The POST message is sent
+Response refinement is called by `ondewo-nlu-cai` when a webhook call is activated for a matched intent. The goal is to
+have
+a last chance at changing the fulfillment messages that were generated by `ondewo-nlu-cai`. The POST message is sent
 to `[server-IP]/response_refinement`.
 
 The following functionality is available in `response_refinement()` in **CUSTOM_CODE.py**:
@@ -181,8 +178,7 @@ The following functionality is available in `response_refinement()` in **CUSTOM_
 
 Information about active contexts and parameter values are supplied to the function, but they cannot be changed here.
 
-### validation
+### Validation
 
 After running either `slot_filling()` or `response_refinement()`, the response message is constructed from the returns
-and then validated. If validation fails, a `ValidationError` will be raised. It is advisable to test code
-implementations in `slot_filling()` and `response_refinement()` by running the tests in `tests/test_webhook_server.py`
+and then validated. If validation fails, a `ValidationError` will be raised.
