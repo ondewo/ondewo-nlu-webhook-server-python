@@ -10,12 +10,6 @@ admin:
   address:
     socket_address: { address: 0.0.0.0, port_value: 9901 } # ondewo-ingress-envoy-admin
 
-layered_runtime: # Note: workaround for envoy v1.29.2 => https://github.com/triton-inference-server/server/issues/6936
-  layers:
-    - name: static_layer_sanitize_te
-      static_layer:
-        envoy.reloadable_features.sanitize_te: false
-
 static_resources:
 
   ##################################################################################
@@ -66,7 +60,7 @@ static_resources:
     # -------------------------------------------------------------------------------
     # Listener: ondewo-nlu-webhook-server-python-ssl
     # -------------------------------------------------------------------------------
-    - name: ondewo-nlu-webhook-server-python-ssl
+    - name: listener_ondewo_nlu_webhook_server_python_ssl
       # https://www.envoyproxy.io/docs/envoy/latest/start/quick-start/securing
       address:
         socket_address: { address: 0.0.0.0, port_value: 443 } # listener_ondewo_aim_ssl
@@ -91,7 +85,7 @@ static_resources:
                         - match:
                             prefix: "/"
                           route:
-                            cluster: cluster_ondewo-nlu-webhook-server-python-ssl
+                            cluster: cluster_ondewo_nlu_webhook_server_python_ssl
                             timeout: 0s
                             retry_policy:
                               retry_on: 5xx, reset, connect-failure
@@ -116,7 +110,6 @@ static_resources:
                 validation_context:
                   trusted_ca:
                     filename: "/etc/certs/ca-cert.pem"
-
 
   ##################################################################################
   # Clusters

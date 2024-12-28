@@ -50,7 +50,7 @@ repos:
         exclude: (^tests_old|^notebooks|^webhook_server_projects)
       - id: end-of-file-fixer # makes sure files end in a newline and only a newline
       - id: pretty-format-json # autoformat json files (e.g. sorting keys)
-        args: [ --autofix, --indent=4 ]
+        args: [ --autofix, --indent=2 ]
       - id: name-tests-test # name pytest files correctly
         args: [ --pytest-test-first ]
         exclude: (^tests/pytest_utils/plugins)
@@ -99,3 +99,8 @@ repos:
         args: [ '--regex=(?:(?:feature|bugfix|support|hotfix)/)?(OND[0-9]{3}-[0-9]{1,5})[_-][\w-]+',
                 '--format=[{ticket}] {commit_msg}',
                 '--mode=regex_match' ]
+
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v3.1.0
+    hooks:
+      - id: add-trailing-comma
