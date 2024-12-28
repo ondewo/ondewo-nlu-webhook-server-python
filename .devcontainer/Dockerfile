@@ -46,8 +46,6 @@ RUN apt-get update && apt-get install -y \
     && apt clean  \
     && apt autoclean
 
-# RUN curl -fsSL https://get.docker.com | sh
-
 # set the time zone to Europe/Vienna
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     dpkg-reconfigure --frontend noninteractive tzdata
