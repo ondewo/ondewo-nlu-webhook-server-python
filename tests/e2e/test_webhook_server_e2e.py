@@ -132,9 +132,9 @@ class TestWebhookServerE2e:
             ConnectionError: If there is an issue connecting to the webhook server.
         """
         # send request to webhook server
-        # mixin not recognized by mypy -> type ignore
+        request_url: str = server_url + "/" + server_function
         response_obj = requests.post(
-            url=server_url + "/" + server_function,
+            url=request_url,
             headers=headers,
             json=request.model_dump_json(),
             verify=False,
