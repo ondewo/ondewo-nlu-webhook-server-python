@@ -24,6 +24,7 @@ ondewo-devops-accounts
 .idea
 .vim
 *.c
+.docker
 
 # C extensions
 *.so

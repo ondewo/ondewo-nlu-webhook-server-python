@@ -28,11 +28,11 @@
   ],
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python",
-    "type=bind,source=/home/${localEnv:USER}/.docker,target=/home/${localEnv:USER}/.docker,readonly=True",
+    "type=bind,source=${localWorkspaceFolder}/.docker,target=/home/${localEnv:USER}/.docker,readonly=False",
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false"
   ],
   "name": "ondewo-nlu-webhook-server-python-dev-container",
-  "postCreateCommand": "make setup_developer_environment_in_devcontainer",
+  "postCreateCommand": "make setup_developer_environment_in_devcontainer && jq -i 'del(.credsStore)' /home/${localEnv:USER}/.docker/config.json",
   "remoteUser": "${localEnv:USER}",
   "settings": {
     "editor.formatOnSave": true,

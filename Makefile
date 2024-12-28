@@ -76,9 +76,9 @@ TEST: ## Prints some important variables
 	@echo "NPM Name: \t $(NPM_USERNAME)"
 	@echo "NPM Password: \t $(NPM_PASSWORD)"
 
-setup_developer_environment_locally: show_welcome install_apt install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop locally
+setup_developer_environment_locally: show_welcome install_apt install_submodules install_dependencies_locally install_precommit_hooks copy_docker_config ## Sets the full environment to develop locally
 
-setup_developer_environment_in_devcontainer: show_welcome install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop locally
+setup_developer_environment_in_devcontainer: show_welcome install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop in a devcontainer
 
 install_dependencies_locally: ## Install dependencies locally
 	pip install -r requirements-dev.txt
@@ -114,6 +114,10 @@ install_precommit_hooks: ## Installs pre-commit hooks and sets them up for the o
 precommit_hooks_run_all_files: ## Runs all pre-commit hooks on all files and not just the changed ones
 	-pre-commit run --all-file
 	pre-commit run --all-file
+
+copy_docker_config: ## Copies the users docker config to the project
+	mkdir -p .docker
+	cp -R ~/.docker/config.json .docker/config.json
 
 run_code_checks: ## Build code checks image and run
 	docker build -t ${IMAGE_TAG_CODE_CHECK} -f dockerfiles/code_checks/static-code-checks.Dockerfile .
