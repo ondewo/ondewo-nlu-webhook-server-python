@@ -339,7 +339,7 @@ release: ## Automate the entire release process
 	git push
 	make create_release_branch
 	make create_release_tag
-	make release_to_github_via_docker
+	make release_to_github_via_docker_image
 	make push_to_pypi_via_docker_image
 	@echo "Release Finished"
 
