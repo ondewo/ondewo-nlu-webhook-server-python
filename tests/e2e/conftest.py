@@ -109,13 +109,17 @@ def webhook_server_for_testing() -> Generator:
     # Deploy the container with ports mapped
     log.debug("Deploying Docker container...")
     webhook_server_port: int = int(os.getenv('ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT', ""))
+    # Filter necessary environment variables if needed
+    environment: Dict[str, str] = {
+        key: value for key, value in os.environ.items() if key.startswith("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON")
+    }
     container = docker_client.containers.run(
         image=image.id,  # Use the image ID returned after building
         ports={f"{webhook_server_port}/tcp": webhook_server_port},
         detach=True,
         name=CONTAINER_NAME,
         # auto_remove=True,
-        environment={**os.environ},
+        environment=environment,
     )
     time.sleep(5)
 
