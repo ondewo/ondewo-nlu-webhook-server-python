@@ -42,9 +42,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     vim \
     wget \
-    && curl -fsSL https://get.docker.com | sh # needed to control asterisks started as docker images \
+    docker.io \
     && apt clean  \
     && apt autoclean
+
+# RUN curl -fsSL https://get.docker.com | sh
 
 # set the time zone to Europe/Vienna
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
