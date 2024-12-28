@@ -31,7 +31,7 @@ RUN apt-get update -qq  \
   && apt-get purge -y --auto-remove \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install --upgrade pip && pip install twine cython
+RUN pip install --upgrade pip && pip install twine cython setuptools
 
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -56,6 +56,8 @@ COPY MANIFEST.in .
 COPY dockerfiles/code_checks/mypy.ini .
 
 COPY requirements.txt .
+
+RUN pip install -r requirements.txt
 
 COPY setup.py  .
 
