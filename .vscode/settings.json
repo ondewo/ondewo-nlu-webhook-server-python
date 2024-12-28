@@ -1,0 +1,20 @@
+{
+  "editor.formatOnSave": true,
+  "python.autoComplete.extraPaths": [
+    "./ondewo_nlu_webhook_server",
+    "./ondewo_nlu_webhook_server_custom_integration",
+    "./tests"
+  ],
+  "python.envFile": "${workspaceFolder}/envs/local.env",
+  "python.formatting.autopep8Path": "autopep8",
+  "python.linting.enabled": true,
+  "python.linting.flake8Args": [
+    "--config=${workspaceFolder}/dockerfiles/code_checks/.flake8"
+  ],
+  "python.linting.flake8Enabled": true,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false
+}

@@ -1,0 +1,22 @@
+{
+  "build": {
+    "context": "../.",
+    "dockerfile": "Dockerfile"
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "esbenp.prettier-vscode"
+  ],
+  "mounts": [
+    "type=bind,source=${localWorkspaceFolder},target=/workspace"
+  ],
+  "name": "ondewo-nlu-webhook-server-python-dev-container",
+  "remoteUser": "vscode",
+  "settings": {
+    "editor.formatOnSave": true,
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "workspaceFolder": "/workspace"
+}
