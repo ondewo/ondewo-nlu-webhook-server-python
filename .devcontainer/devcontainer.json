@@ -1,5 +1,8 @@
 {
   "build": {
+    "args": {
+      "USERNAME": "${localEnv:USER}"
+    },
     "context": "../.",
     "dockerfile": "Dockerfile"
   },
@@ -23,20 +26,18 @@
     "ms-vscode.test-adapter-converter"
   ],
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "moby": false,
-      "version": "latest"
-    }
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "mounts": [
-    "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python"
+    "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python",
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
   ],
   "name": "ondewo-nlu-webhook-server-python-dev-container",
   "postCreateCommand": "make setup_developer_environment_in_devcontainer",
-  "remoteUser": "vscode",
+  "remoteUser": "${localEnv:USER}",
   "settings": {
     "editor.formatOnSave": true,
-    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.defaultInterpreterPath": "/usr/bin/python",
     "terminal.integrated.defaultProfile.linux": "bash"
   },
   "workspaceFolder": "/github/ondewo-nlu-webhook-server-python"

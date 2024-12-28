@@ -1,6 +1,14 @@
 # Use the official Python 3.13 image as a base
 FROM python:3.13-slim
 
+# Set default USERID to 1000 if not passed
+ARG USERNAME
+ARG USERID=1000
+
+# Set environment variables
+ENV USERNAME=${USERNAME}
+ENV USERID=${USERID}
+
 # Set timezone to Europe/Vienna
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -30,6 +38,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     vim \
     wget \
+    docker.io \
     && ln -s /usr/bin/python3 /usr/bin/python \
     && apt clean  \
     && apt autoclean
@@ -47,7 +56,12 @@ WORKDIR /github/ondewo-nlu-webhook-server-python
 RUN pip install --upgrade pip
 
 # Ensure vscode user has the correct permissions
-RUN useradd -ms /bin/bash vscode
-USER vscode
 
-RUN echo 'export PATH=$PATH:/home/vscode/.local/bin' >> /home/vscode/.bashrc
+# Create the user with the given username and user ID, and add to the docker group
+RUN useradd -m -u ${USERID} -s /bin/bash ${USERNAME} && usermod -aG docker ${USERNAME}
+
+USER $USERNAME
+
+RUN newgrp docker
+
+RUN echo 'export PATH=$PATH:/home/$USERNAME/.local/bin' >> /home/$USERNAME/.bashrc
