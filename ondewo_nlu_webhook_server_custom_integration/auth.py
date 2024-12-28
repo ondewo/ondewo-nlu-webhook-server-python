@@ -48,7 +48,7 @@ service_config_json: str = json.dumps(
             {
                 "name": [
                     # To apply retry to all methods, put [{}] as a value in the "name" field
-                    {}
+                    {},
                     # List single  rpc method call
                     # {"service": "ondewo.nlu.Agents", "method": "GetAgent"},
                     # {"service": "ondewo.nlu.Agents", "method": "ListAgents"},
@@ -76,9 +76,9 @@ service_config_json: str = json.dumps(
                         grpc.StatusCode.DATA_LOSS.name,
                     ],
                 },
-            }
-        ]
-    }
+            },
+        ],
+    },
 )
 
 options: Set[Tuple[str, Any]] = {
@@ -92,7 +92,7 @@ options: Set[Tuple[str, Any]] = {
     # Example arg requested for the feature
     ("grpc.dns_enable_srv_queries", 1),
     ("grpc.enable_retries", 1),
-    ("grpc.service_config", service_config_json)
+    ("grpc.service_config", service_config_json),
 }
 
 nlu_client_config: ClientConfig = ClientConfig(
@@ -127,7 +127,7 @@ def login() -> Optional[LoginResponse]:
             request=LoginRequest(  # type: ignore
                 userEmail=nlu_client_config.user_name,
                 password=nlu_client_config.password,
-            )
+            ),
         )
         if not login_response or not login_response.authToken:
             raise ValueError("Login response or auth token is missing.")
@@ -154,7 +154,7 @@ def get_intent() -> Optional[intent_pb2.Intent]:
     try:
         nlu_request: GetIntentRequest = GetIntentRequest(
             name="projects/<example_project_id>/agent/intents/<example_intent_name>",
-            languageCode="de-DE"
+            languageCode="de-DE",
         )
         intent: intent_pb2.Intent = nlu_client.services.intents.get_intent(request=nlu_request)  # type: ignore
         log.debug(f"Intent response: {intent}")

@@ -27,10 +27,13 @@ from ondewo_nlu_webhook_server.version import __version__
 
 extensions = cythonize(
     [
-        Extension("ondewo_nlu_webhook_server.*", ["ondewo_nlu_webhook_server/**/*.py"]),
+        Extension(
+            "ondewo_nlu_webhook_server.*",
+            ["ondewo_nlu_webhook_server/**/*.py"],
+        ),
         Extension(
             "ondewo_nlu_webhook_server_custom_integration.*",
-            ["ondewo_nlu_webhook_server_custom_integration/**/*.py"]
+            ["ondewo_nlu_webhook_server_custom_integration/**/*.py"],
         ),
     ],
     language_level=3,

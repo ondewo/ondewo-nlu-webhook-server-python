@@ -330,7 +330,7 @@ LANGUAGE_TO_LOCALES_DICT: Dict[str, Set[str]] = {
     'cy': {'cy-GB'},
     'da': {
         'da-DK',
-        'da-GL'
+        'da-GL',
     },
     'de': {
         'de-AT',
@@ -388,7 +388,8 @@ LANGUAGE_TO_LOCALES_DICT: Dict[str, Set[str]] = {
         'en-NF',
         'en-ZW',
         'en-BW',
-        'en-AG'},
+        'en-AG',
+    },
     'es': {
         'es-PY',
         'es-SV',
@@ -465,7 +466,7 @@ LANGUAGE_TO_LOCALES_DICT: Dict[str, Set[str]] = {
         'it-IT',
         'it-CH',
         'it-VA',
-        'it-SM'
+        'it-SM',
     },
     'ja': {'ja-JP'},
     'jv': {
@@ -580,7 +581,7 @@ LANGUAGE_TO_LOCALES_DICT: Dict[str, Set[str]] = {
         'zh-TW',
         'zh-HK',
     },
-    'zu': {'zu-ZA'}
+    'zu': {'zu-ZA'},
 }
 
 
@@ -866,7 +867,7 @@ class LanguageCode(Enum):
     def intersect_sets(
         cls,
         set1: Set['LanguageCode'],
-        set2: Set['LanguageCode']
+        set2: Set['LanguageCode'],
     ) -> Set['LanguageCode']:
         extended_set1: Set['LanguageCode'] = cls.extend_set(set1)
         extended_set2: Set['LanguageCode'] = cls.extend_set(set2)
@@ -894,7 +895,7 @@ class LanguageCode(Enum):
     @staticmethod
     def assert_is_a_language(
         lang: Any,
-        raise_exception: bool = True
+        raise_exception: bool = True,
     ) -> bool:
         """
         Check if input is a language; log and raise Exception if false
@@ -985,7 +986,7 @@ class LanguageCode(Enum):
 # Create the LANGUAGE_TO_LOCALES_DICT
 DEFAULT_LANGUAGES: List['LanguageCode'] = [
     LanguageCode.de_DE,
-    LanguageCode.en_US
+    LanguageCode.en_US,
 ]
 
 # NOTE(arath): for generation purposes of LANGUAGE_TO_LOCALES_DICT uncomment and execute

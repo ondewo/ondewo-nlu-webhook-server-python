@@ -106,6 +106,7 @@ install_precommit_hooks: ## Installs pre-commit hooks and sets them up for the o
 	pre-commit install --hook-type commit-msg
 
 precommit_hooks_run_all_files: ## Runs all pre-commit hooks on all files and not just the changed ones
+	-pre-commit run --all-file
 	pre-commit run --all-file
 
 run_code_checks: ## Build code checks image and run
@@ -189,14 +190,14 @@ build_server_image_release: ## Build the image
 		--build-arg CACHEBUST=$$(date +%s) \
  		.
 
-run_ondewo_nlu_webhook_server_release_in_container: show_welcome
+run_ondewo_nlu_webhook_server_release_in_container: show_welcome ## RUn the server release in as a container with nginx
 	@if [ ! -d "${ONDEWO_INGRESS_ENVOY_CERTS_PATH}" ]; then \
 		$(MAKE) run_ondewo_nlu_webhook_server_create_ssl_certificates; \
 	fi;
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env build
 	docker compose -f docker-compose.yaml --env-file envs/${ENV}.env up --force-recreate --renew-anon-volumes
 
-run_ondewo_nlu_webhook_server_release_in_container_daemon: show_welcome
+run_ondewo_nlu_webhook_server_release_in_container_daemon: show_welcome ## RUn the server release in as a container with nginx as daemon
 	@if [ ! -d "${ONDEWO_INGRESS_ENVOY_CERTS_PATH}" ]; then \
 		$(MAKE) run_ondewo_nlu_webhook_server_create_ssl_certificates; \
 	fi;

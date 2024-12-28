@@ -63,7 +63,7 @@ async def call_custom_code(
             )
             log.debug(
                 "relay.py: call_custom_code: slot_filling: END:"
-                f"webhook_response.outputContexts={webhook_response.outputContexts}"
+                f"webhook_response.outputContexts={webhook_response.outputContexts}",
             )
 
         elif call_case == RESPONSE_REFINEMENT_CASE:
@@ -78,7 +78,7 @@ async def call_custom_code(
             log.debug(
                 "relay.py: call_custom_code: response_refinement: END: "
                 f"fulfillmentMessages={webhook_response} \n"
-                f"outputContexts={webhook_response.outputContexts}"
+                f"outputContexts={webhook_response.outputContexts}",
             )
 
         log.debug("relay.py: call_custom_code: response_refinement: END: ")

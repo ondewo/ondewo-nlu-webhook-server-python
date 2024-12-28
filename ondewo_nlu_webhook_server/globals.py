@@ -21,21 +21,21 @@ from typing import ClassVar
 class WebhookGlobals():
 
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST: ClassVar[str] = str(
-        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0").strip()
+        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0").strip(),
     )
 
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT: ClassVar[int] = int(
-        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", "8000").strip()
+        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", "8000").strip(),
     )
 
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME: ClassVar[str] = str(
-        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME", "").strip()
+        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME", "").strip(),
     )
 
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD: ClassVar[str] = str(
-        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD", "").strip()
+        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD", "").strip(),
     )
 
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER: ClassVar[str] = str(
-        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER", "").strip()
+        os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER", "").strip(),
     )

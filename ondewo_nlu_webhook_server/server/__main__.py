@@ -115,10 +115,7 @@ def main() -> None:
             "------------------------ ENVIRONMENT ---------------------\n"
             "----------------------------------------------------------\n"
         )
-        env_items: List[Tuple[str, str]] = sorted(
-            os.environ.items(),
-            key=lambda environment: environment[0]
-        )
+        env_items: List[Tuple[str, str]] = sorted(os.environ.items(), key=lambda environment: environment[0])
         for key, value in env_items:
             env_string += f"{key}={value}\n"
         env_string += (

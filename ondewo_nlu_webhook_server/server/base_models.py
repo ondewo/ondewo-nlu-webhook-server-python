@@ -15,8 +15,6 @@
 """
 Definitions of json dataclass objects used for communication from & to the webhook server
 """
-import json
-import os.path
 from enum import Enum
 from typing import (
     Any,
@@ -35,17 +33,6 @@ from pydantic import (
 )
 
 from ondewo_nlu_webhook_server.language_code import LanguageCode
-
-with open(
-    os.path.join(os.path.dirname(__file__), "..", "resources", "json_verification", "request_schema.json"),
-    "r"
-) as f:
-    request_schema = json.load(f)
-with open(
-    os.path.join(os.path.dirname(__file__), "..", "resources", "json_verification", "response_schema.json"),
-    "r"
-) as f:
-    response_schema = json.load(f)
 
 
 class WebhookResponseModel(BaseModel):
@@ -260,7 +247,7 @@ class IntentMessage(BaseModel):
         if value and value not in INTENT_MESSAGE_PLATFORM_ENUM_SET:
             raise ValueError(
                 f"Provided platform name '{value}' is not valid. "
-                f"Platform name should be one of '{INTENT_MESSAGE_PLATFORM_ENUM_SET}'"
+                f"Platform name should be one of '{INTENT_MESSAGE_PLATFORM_ENUM_SET}'",
             )
         return value
 
@@ -479,7 +466,7 @@ class WebhookRequest(BaseModel):
                         text=IntentMessageText(
                             text=[
                                 'first message',
-                                'second message'
+                                'second message',
                             ],
                         ),
                         platform=IntentMessagePlatformEnum.PLATFORM_UNSPECIFIED.value,
@@ -492,19 +479,19 @@ class WebhookRequest(BaseModel):
                         parameters={
                             'parameter1': Parameter(value='1', value_original='1', display_name='1', name=''),
                             'parameter2': Parameter(value='2', value_original='2', display_name='2', name=''),
-                        }
+                        },
                     ),
                     Context(
                         name='context name 2',
                         lifespanCount=1,
                         parameters={
                             'parameter1': Parameter(value='1', value_original='1', display_name='1', name=''),
-                        }
-                    )
+                        },
+                    ),
                 ],
                 intent=Intent(
                     name='projects/<PROJECT-ID>/sessions/<SESSION-ID>/agent/intents/<INTENT-ID>',
-                    displayName='some intent name'
+                    displayName='some intent name',
                 ),
                 intentDetectionConfidence=99,
                 languageCode=language_code_str,
@@ -531,6 +518,6 @@ class WebhookRequest(BaseModel):
             # Ensure 'payload' field is provided
             session='/path/of/session',
             headers={
-                'header1': 'value1'
-            }
+                'header1': 'value1',
+            },
         )

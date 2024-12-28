@@ -49,7 +49,7 @@ from ondewo_nlu_webhook_server.server.base_models import (
     Context,
     Intent,
 )
-from ondewo_nlu_webhook_server.utils.helpers import replace_placeholder_in_text
+from ondewo_nlu_webhook_server_custom_integration.utils.helpers import replace_placeholder_in_text
 
 
 # region Intent Mapping

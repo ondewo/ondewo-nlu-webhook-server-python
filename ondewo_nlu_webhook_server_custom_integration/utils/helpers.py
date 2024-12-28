@@ -76,7 +76,7 @@ def check_if_text_response_exist(fulfillment_messages: List[Dict[str, Any]]) -> 
 
 
 def override_fulfillment_with_text(
-    fulfillment_messages: List[Dict[str, Any]], text: str
+    fulfillment_messages: List[Dict[str, Any]], text: str,
 ) -> List[Dict[str, Any]]:
     """
     Overrides the current text in the fulfillment messages with the given text string.
@@ -193,7 +193,7 @@ def create_new_context_name(
         if len(active_contexts) < 1:
             raise ValueError(
                 "If no project ID and session ID are provided, at least one active context is needed "
-                + "to extract project and session IDs"
+                + "to extract project and session IDs",
             )
         some_context_name = active_contexts[0].name
         project_id = some_context_name.split("projects/")[1].split("/agent")[0]
@@ -246,13 +246,17 @@ def replace_placeholder_in_text(
                         price: str
                         if parameter_type == "parameter1":  # TODO: example parameter, use yours
                             price = next(
-                                (item["price"] for item in data['my-product-1'] if  # type: ignore
-                                 "my-product-category" in item["category"]), None
+                                (
+                                    item["price"] for item in data['my-product-1'] if  # type: ignore
+                                    "my-product-category" in item["category"]
+                                ), None,
                             )[:-2]
                         else:
                             price = next(
-                                (item["price"] for item in data['my-product-2'] if  # type: ignore
-                                 "my-product-category" in item["category"]), None
+                                (
+                                    item["price"] for item in data['my-product-2'] if  # type: ignore
+                                    "my-product-category" in item["category"]
+                                ), None,
                             )[:-2]
 
                         assert price is not None
@@ -308,7 +312,7 @@ def extract_price(url: str) -> Dict[str, List[Dict[str, str]]]:
                 {
                     "category": category,
                     "price": price,
-                }
+                },
             )
 
     return {"price_list": values}
