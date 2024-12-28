@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
     && apt clean  \
     && apt autoclean
 
-# set the time zone to Europe/Vienna
+# set the time zone to UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
     dpkg-reconfigure --frontend noninteractive tzdata
 
