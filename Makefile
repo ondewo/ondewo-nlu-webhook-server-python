@@ -378,11 +378,11 @@ checkout_defined_submodule_versions:  ## Update submodule versions
 #		PYPI
 
 build_package: ## Builds PYPI Package
-	python setup.py sdist bdist_wheel
+	python setup.py sdist
 	chmod a+rw dist -R
 
 upload_package: ## Uploads PYPI Package
-	twine upload --verbose -r pypi dist/* -u${PYPI_USERNAME} -p${PYPI_PASSWORD}
+	twine upload --verbose -r pypi dist/*.tar.gz -u${PYPI_USERNAME} -p${PYPI_PASSWORD}
 
 clear_package_data: ## Clears PYPI Package
 	echo "Waiting 5s so directory for removal is not busy anymore"
