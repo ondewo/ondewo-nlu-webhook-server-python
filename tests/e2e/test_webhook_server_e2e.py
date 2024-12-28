@@ -46,7 +46,7 @@ class TestWebhookServerE2e:
         CUSTOM_CODE.py
     """
 
-    server_url: str = f"http://localhost:{os.getenv('ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT')}"
+    server_url: str = f"http://172.17.0.1:{os.getenv('ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT')}"
 
     def test_server_connection(
         self,

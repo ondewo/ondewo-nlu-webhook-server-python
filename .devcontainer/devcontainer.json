@@ -28,7 +28,8 @@
   ],
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python",
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false"
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false",
+    "type=bind,source=/home/${localEnv:USER}/docker,target=/home/${localEnv:USER}/docker,readonly=True"
   ],
   "name": "ondewo-nlu-webhook-server-python-dev-container",
   "postCreateCommand": "make setup_developer_environment_in_devcontainer",
