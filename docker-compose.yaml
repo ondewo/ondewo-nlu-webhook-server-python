@@ -30,6 +30,10 @@ services:
     ports:
       # Note: comment the following line to prevent accessing the webhook server without ssl via envoy
       - ${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}:${ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT}
+    dns:
+      - 127.0.0.11
+      - 8.8.8.8
+      - 1.1.1.1
     environment:
       # Analytics variables
       - HOST_DOCKER_GID
