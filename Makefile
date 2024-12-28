@@ -387,7 +387,7 @@ upload_package: ## Uploads PYPI Package
 clear_package_data: ## Clears PYPI Package
 	echo "Waiting 5s so directory for removal is not busy anymore"
 	sleep 5s
-	-rm -rf build dist ondewo_nlu_client.egg-info
+	-rm -rf build dist *.egg-info
 
 push_to_pypi_via_docker: push_to_pypi_via_docker_image  ## Release automation for building and pushing to pypi via a docker image
 
