@@ -1,6 +1,9 @@
 # Use the official Python 3.13 image as a base
 FROM python:3.13-slim
 
+ARG HOST_DOCKER_GID=999
+RUN addgroup --gid $HOST_DOCKER_GID docker && newgrp docker && groupmod -g $HOST_DOCKER_GID docker && newgrp docker && usermod -aG docker root
+
 # Set default USERID to 1000 if not passed
 ARG USERNAME
 ARG USERID=1000
@@ -27,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     make \
     p7zip \
     parallel \
+    passwd \
     rsync \
     sed \
     ssh \
@@ -38,8 +42,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     vim \
     wget \
-    docker.io \
-    && ln -s /usr/bin/python3 /usr/bin/python \
+    && curl -fsSL https://get.docker.com | sh # needed to control asterisks started as docker images \
     && apt clean  \
     && apt autoclean
 
@@ -55,10 +58,9 @@ WORKDIR /github/ondewo-nlu-webhook-server-python
 # Install additional Python packages globally if needed
 RUN pip install --upgrade pip
 
-# Ensure vscode user has the correct permissions
-
 # Create the user with the given username and user ID, and add to the docker group
-RUN useradd -m -u ${USERID} -s /bin/bash ${USERNAME} && usermod -aG docker ${USERNAME}
+RUN useradd -m --uid ${USERID} -s /bin/bash ${USERNAME} && \
+    usermod -aG docker ${USERNAME} && usermod -aG sudo ${USERNAME}
 
 USER $USERNAME
 
