@@ -57,7 +57,7 @@ COPY dockerfiles/code_checks/mypy.ini .
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt && pip install -r requirements-ondewo-clients.txt
 
 COPY setup.py  .
 
