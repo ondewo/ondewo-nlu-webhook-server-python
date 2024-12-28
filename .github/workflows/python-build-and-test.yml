@@ -124,22 +124,11 @@ jobs:
             echo "Removing containerd.io package..."
             sudo apt-get remove -y containerd.io
           fi
-          # Check if docker.io is installed, and install if not
-          if ! dpkg -l | grep -q docker.io; then
-            echo "docker.io not found, installing Docker..."
-            sudo apt-get update
-            sudo apt-get install -y docker.io
-          else
-            echo "docker.io is already installed."
-          fi
-          # Check if user is already in the docker group
-          if ! groups $USER | grep -q '\bdocker\b'; then
-            echo "Adding $USER to docker group..."
-            sudo usermod -aG docker $USER
-            newgrp docker
-          else
-            echo "$USER is already in the docker group."
-          fi
+          # Install Docker
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo usermod -aG docker $USER
+          newgrp docker
 
       # Step 5: Run end-to-end tests
       - name: Run end-to-end tests
