@@ -340,7 +340,7 @@ release: ## Automate the entire release process
 	make create_release_branch
 	make create_release_tag
 	make release_to_github_via_docker
-	make push_to_pypi_via_docker
+	make push_to_pypi_via_docker_image
 	@echo "Release Finished"
 
 create_release_branch: ## Create Release Branch and push it to origin
