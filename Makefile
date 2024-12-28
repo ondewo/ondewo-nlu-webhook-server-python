@@ -310,7 +310,8 @@ release: ## Automate the entire release process
 	make build
 	/bin/bash -c 'source `conda info --base`/bin/activate ondewo-nlu-webhook-server-python; make precommit_hooks_run_all_files || echo "PRECOMMIT FOUND SOMETHING"'
 	git status
-	git add ondewo
+	git add ondewo_nlu_webhook_server
+	git add ondewo_nlu_webhook_server_custom_integration
 	git add Makefile
 	git add RELEASE.md
 	git add setup.py
