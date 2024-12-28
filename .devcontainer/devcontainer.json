@@ -32,7 +32,7 @@
     "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false"
   ],
   "name": "ondewo-nlu-webhook-server-python-dev-container",
-  "postCreateCommand": "make setup_developer_environment_in_devcontainer && jq -i 'del(.credsStore)' /home/${localEnv:USER}/.docker/config.json",
+  "postCreateCommand": "make setup_developer_environment_in_devcontainer && jq 'del(.credsStore)' ~/.docker/config.json > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json",
   "remoteUser": "${localEnv:USER}",
   "settings": {
     "editor.formatOnSave": true,
