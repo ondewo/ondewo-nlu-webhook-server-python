@@ -113,7 +113,7 @@ jobs:
 
       # Step 4: Install Docker for e2e testing
       - name: Install Docker
-        if: env.GITHUB_ACTIONS == 'true'
+        if: ${{ !env.ACT }} # skip during local actions testing
         run: |
           # Check if containerd and containerd.io are installed, and remove them if present
           if dpkg -l | grep -q containerd; then
