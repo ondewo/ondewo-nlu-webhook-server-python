@@ -88,5 +88,5 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
             terminalreporter.write_sep(sep="=", title="maximum memory usage")
             terminalreporter.write(
                 f'{max_mem_use.consumed_ram / 1024 / 1024:.1f}MB'
-                f' on {max_mem_use.on} of {max_mem_use.nodeid}\n'
+                f' on {max_mem_use.on} of {max_mem_use.nodeid}\n',
             )
