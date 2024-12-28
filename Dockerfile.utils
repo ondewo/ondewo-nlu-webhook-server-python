@@ -71,7 +71,7 @@ COPY RELEASE.md .
 
 COPY ondewo_nlu_webhook_server ondewo_nlu_webhook_server
 
-COPY ondewo_nlu_webhook_server_custom_integration ondewo_nlu_webhook_server
+COPY ondewo_nlu_webhook_server_custom_integration ondewo_nlu_webhook_server_custom_integration
 
 # run the container forever
 CMD tail -f /dev/null
