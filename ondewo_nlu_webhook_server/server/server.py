@@ -222,7 +222,9 @@ async def call_case(
     if not WebhookResponse.model_validate(webhook_response):
         raise HTTPException(status_code=500, detail="Invalid response format")
 
-    log.debug(webhook_response.model_dump_json())
+    log.debug(
+        f"webhook_response.model_dump_json(): {json.dumps(webhook_response.model_dump(), indent=2)}"
+    )
     return webhook_response
 
 

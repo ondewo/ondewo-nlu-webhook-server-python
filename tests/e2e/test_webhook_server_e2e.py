@@ -19,8 +19,8 @@ tests if the webhook server is active
     checks if class instances were assigned correctly and whether the session IDs (request.session & response.session)
     match
 """
-import json
 import os
+from json import JSONDecodeError
 from typing import (
     Any,
     Dict,
@@ -87,7 +87,11 @@ class TestWebhookServerE2e:
         """
         # for active_intent in active_intents:
         request: WebhookRequest = WebhookRequest.create_sample_request()
-        #     request.queryResult.intent.displayName = active_intent
+        # update headers with request headers if exists
+        if request.headers:
+            headers.update(request.headers)
+
+        # assign headers to request
         request.headers = headers
 
         # validate request structure (testing the test)
@@ -95,10 +99,10 @@ class TestWebhookServerE2e:
 
         # send it to the server, src test function (not slot_filling() and last_minute_check())
         self.send_request_and_validate(
-            request=request,
-            server_url=self.server_url,
-            server_function=server_function,
             headers=headers,
+            request=request,
+            server_function=server_function,
+            server_url=self.server_url,
         )
 
     @staticmethod
@@ -111,9 +115,6 @@ class TestWebhookServerE2e:
         """
         Sends a request to the webhook server, validates the response structure, and returns it.
 
-        This method sends a request to the specified webhook server, validates that the response
-        contains the expected structure, and returns the validated response.
-
         Args:
             request (WebhookRequest):
                 The request data to be sent to the webhook server.
@@ -122,7 +123,7 @@ class TestWebhookServerE2e:
             server_function (str):
                 The function to be invoked on the server, typically "slot_filling" or "last_minute_check".
             headers (Dict[str, str]):
-            A dictionary containing headers to be included in the request.
+                A dictionary containing headers to be included in the request.
 
         Returns:
             WebhookResponse: The validated response from the webhook server.
@@ -131,24 +132,44 @@ class TestWebhookServerE2e:
             ValueError: If the response structure is invalid.
             ConnectionError: If there is an issue connecting to the webhook server.
         """
-        # send request to webhook server
-        request_url: str = server_url + "/" + server_function
-        response_obj = requests.post(
-            url=request_url,
-            headers=headers,
-            json=request.model_dump_json(),
-            verify=False,
-        )
-        log.debug(f"response_obj: {response_obj}")
-        response_dict: Dict[str, Any] = response_obj.json()
-        log.debug(f"response_dict: response_obj.json(): {response_obj.json()}")
+        # Construct the full request URL
+        request_url: str = f"{server_url}/{server_function}"
+        log.debug(f"Request URL: {request_url}")
 
-        json.dumps(response_dict)
-        log.debug(f"json.dumps(response_dict): {json.dumps(response_dict)}")
+        # Serialize the request data
+        request_payload: Dict[str, Any] = request.model_dump()
+        log.debug(f"Request payload: {request_payload}")
 
-        # response-dictionary structure validation
-        assert WebhookResponse.model_validate(response_dict)
+        response_obj: requests.Response
+        try:
+            # Send the POST request
+            response_obj = requests.post(
+                url=request_url,
+                headers=headers,
+                json=request_payload,
+                verify=False,
+            )
+            response_obj.raise_for_status()
+        except requests.RequestException as e:
+            log.error(f"Error while sending request: {e}")
+            raise ConnectionError(f"Failed to connect to {request_url}: {e}") from e
 
-        # assign WebhookResponse dataclass
-        response: WebhookResponse = WebhookResponse(**response_dict)
-        return response
+        assert response_obj
+        response_dict: Dict[str, Any]
+        # Parse the response as JSON
+        try:
+            response_dict = response_obj.json()
+            log.debug(f"Response JSON: {response_dict}")
+        except JSONDecodeError as e:
+            log.error(f"Invalid JSON response: {response_obj.text}")
+            raise ValueError(f"Invalid JSON response from server: {e}") from e
+
+        # Validate the response structure
+        try:
+            WebhookResponse.model_validate(response_dict)
+        except Exception as e:
+            log.error(f"Response validation failed: {e}")
+            raise ValueError(f"Response validation failed: {e}") from e
+
+        # Return the response as a WebhookResponse instance
+        return WebhookResponse(**response_dict)
