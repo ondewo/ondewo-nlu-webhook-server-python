@@ -23,7 +23,7 @@ ENV PYPI_PASSWORD=<PYPI_PASSWORD>
 ENV GITHUB_GH_TOKEN=<GITHUB_GH_TOKEN>
 
 RUN apt-get update -qq  \
-  && apt-get dist-upgrade -qq -y --no-install-recommends --fix-missing make tmux vim sed tree tk-dev curl sudo tzdata \
+  && apt-get dist-upgrade -qq -y --no-install-recommends --fix-missing gcc make tmux vim sed tree tk-dev curl sudo tzdata \
   && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime  \
   && echo $TZ > /etc/timezone \
   && dpkg-reconfigure --frontend noninteractive tzdata \
