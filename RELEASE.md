@@ -6,7 +6,7 @@
 
 ### New Features
 
-* [OND216-2](https://ondewo.atlassian.net/browse/OND216-2) Reorganize git repo to fastapi
+* [OND216-2](https://ondewo.atlassian.net/browse/OND216-2) Reorganize git repo to fastapi and add ssl support via envoy
 
 *****************
 
