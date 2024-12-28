@@ -74,7 +74,7 @@ def test_invalid_request_format(valid_request_data: Dict[str, Any], headers: Dic
     response = client.post(
         url="/slot_filling",
         headers=headers,
-        json=invalid_request_data
+        json=invalid_request_data,
     )
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid request format"}
@@ -86,7 +86,7 @@ def test_custom_code_execution(valid_request_data: Dict[str, Any], headers: Dict
     response = client.post(
         url="/response_refinement",
         headers=headers,
-        json=valid_request_data
+        json=valid_request_data,
     )
     assert response.status_code == 200
     response_json: Dict[str, Any] = response.json()

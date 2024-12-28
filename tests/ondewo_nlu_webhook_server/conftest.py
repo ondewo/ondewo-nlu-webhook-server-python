@@ -43,5 +43,5 @@ def headers() -> Dict[str, str]:
 
     # Return headers including the Basic Auth header
     return {
-        "Authorization": f"Basic {encoded_credentials}"
+        "Authorization": f"Basic {encoded_credentials}",
     }
