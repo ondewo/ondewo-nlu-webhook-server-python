@@ -24,6 +24,7 @@ ondewo-devops-accounts
 .vscode
 .idea
 .vim
+*.c
 
 # C extensions
 *.so
