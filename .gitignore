@@ -21,7 +21,6 @@ ondewo-devops-accounts
 # Byte-compiled / optimized / DLL files
 **/__pycache__/**
 *$py.class
-.vscode
 .idea
 .vim
 *.c

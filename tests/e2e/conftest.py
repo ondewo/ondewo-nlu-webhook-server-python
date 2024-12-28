@@ -35,13 +35,8 @@ from docker.models.images import Image
 from ondewo.logging.logger import logger_console as log
 
 # Container and image tag constants
-CONTAINER_TAG: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME", "")
-assert CONTAINER_TAG
+IMAGE_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME", "")
 CONTAINER_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_CONTAINER_NAME", "")
-assert CONTAINER_NAME
-# The image ID should match the tag used for building
-IMAGE_TAG: str = CONTAINER_TAG  # This should match the tag set when building the image
-assert IMAGE_TAG
 
 
 class CustomDockerClient(APIClient):
@@ -102,7 +97,7 @@ def webhook_server_for_testing() -> Generator:
         rm=True,
         forcerm=True,
         target="cythonized",
-        tag=IMAGE_TAG,  # Correctly use image_tag here
+        tag=IMAGE_NAME,
         buildargs={"HOST_DOCKER_GID": os.getenv("HOST_DOCKER_GID")},
     )
 
@@ -147,8 +142,8 @@ def webhook_server_for_testing() -> Generator:
     container.remove()
 
     # Optionally, remove the image
-    log.debug(f"Removing Docker image: {IMAGE_TAG}")
-    docker_client.images.remove(IMAGE_TAG)
+    log.debug(f"Removing Docker image: {IMAGE_NAME}")
+    docker_client.images.remove(IMAGE_NAME)
 
 
 @pytest.fixture
