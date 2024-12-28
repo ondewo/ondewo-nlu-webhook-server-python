@@ -124,15 +124,19 @@ def webhook_server_for_testing() -> Generator:
     time.sleep(5)
 
     # Check if the container is running
-    while docker_client.containers.get(CONTAINER_NAME).status != "running":
+    retries_running: int = 0
+    while docker_client.containers.get(CONTAINER_NAME).status != "running" and retries_running < 2:
         container.reload()
         time.sleep(20)
+        retries_running += 1
 
     # Check if the container's health status is 'healthy'
     custom_docker_client: CustomDockerClient = CustomDockerClient(container=container)
-    while not custom_docker_client.check_health():
+    retries_health: int = 0
+    while not custom_docker_client.check_health() and retries_health < 2:
         log.debug("Waiting for the server to become healthy...")
         time.sleep(5)
+        retries_health += 1
 
     # Yield to the test after the container is up and healthy
     yield
