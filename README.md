@@ -85,7 +85,7 @@ import uvicorn
 uvicorn.run(
     app="ondewo_nlu_webhook_server.server.__main__:app",
     host="0.0.0.0",
-    port=50091,
+    port=59001,
     reload=False,  # Disable reload in production
     log_level="info",  # Reduce log verbosity
     workers=1,  # Use multiple workers for better concurrency
@@ -126,18 +126,18 @@ Follow these steps to install and set up ngrok on Windows:
       ```bash
          ngrok.exe config add-authtoken <MY_AUTHTOKEN>
       ```
-    - This command will create a public URL for your local server on port 50091.
+    - This command will create a public URL for your local server on port 59001.
 5. **Start the ngrok tunnel**: Ngrok generates a random public address in free mode, and it may change each time you
    start a new session.
    This will create a public URL that points to your SSL-encrypted local server.
     - For a local server without SSL encryption:
       ```bash
-         ngrok.exe http http://localhost:50091
+         ngrok.exe http http://localhost:59001
       ```
       This will create a public URL that points to your local server running without SSL-encryption.
     - For a local server wit SSL encryption:
       ```bash
-         ngrok.exe http https://localhost:50091
+         ngrok.exe http https://localhost:59001
       ```
       This will create a public URL that points to your SSL-encrypted local server.
 
@@ -162,18 +162,18 @@ Follow these steps to install and set up ngrok on linux:
       ```bash
          ngrok config add-authtoken <MY_AUTHTOKEN>
       ```
-    - This command will create a public URL for your local server on port 50091.
+    - This command will create a public URL for your local server on port 59001.
 5. **Start the ngrok tunnel**: Ngrok generates a random public address in free mode, and it may change each time you
    start a new session.
    This will create a public URL that points to your SSL-encrypted local server.
     - For a local server without SSL encryption:
       ```bash
-         ./ngrok http http://localhost:50091
+         ./ngrok http http://localhost:59001
       ```
       This will create a public URL that points to your local server running without SSL-encryption.
     - For a local server wit SSL encryption:
       ```bash
-         ./ngrok http https://localhost:50091
+         ./ngrok http https://localhost:59001
       ```
       This will create a public URL that points to your SSL-encrypted local server.
 
