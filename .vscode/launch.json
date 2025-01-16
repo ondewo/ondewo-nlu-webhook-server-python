@@ -1,0 +1,41 @@
+{
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/envs/local.env",
+      "name": "Debug ondewo_nlu_webhook_server",
+      "program": "${workspaceFolder}/ondewo_nlu_webhook_server/server/__main__.py",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/envs/local.env",
+      "name": "Start ondewo_nlu_webhook_server",
+      "program": "${workspaceFolder}/ondewo_nlu_webhook_server/server/__main__.py",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "tests"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "envFile": "${workspaceFolder}/envs/local.env",
+      "module": "pytest",
+      "name": "Run Pytests",
+      "request": "launch",
+      "type": "debugpy"
+    }
+  ],
+  "version": "0.2.0"
+}
