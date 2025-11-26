@@ -1,0 +1,231 @@
+{
+  "tasks": [
+    {
+      "args": [
+        "tests",
+        "-v",
+        "--tb=short"
+      ],
+      "command": "pytest",
+      "group": {
+        "isDefault": true,
+        "kind": "test"
+      },
+      "label": "Run Pytest - All Tests",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "unit",
+        "--tb=short"
+      ],
+      "command": "pytest",
+      "group": "test",
+      "label": "Run Pytest - Unit Tests",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "integration",
+        "--tb=short"
+      ],
+      "command": "pytest",
+      "group": "test",
+      "label": "Run Pytest - Integration Tests",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "e2e",
+        "--tb=short"
+      ],
+      "command": "pytest",
+      "group": "test",
+      "label": "Run Pytest - E2E Tests",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "--cov=ondewo_nlu_webhook_server",
+        "--cov=ondewo_nlu_webhook_server_custom_integration",
+        "--cov-report=html",
+        "--cov-report=term-missing"
+      ],
+      "command": "pytest",
+      "group": "test",
+      "label": "Run Pytest with Coverage",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "format"
+      ],
+      "command": "make",
+      "group": "build",
+      "label": "Format Code (Ruff + Black)",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "ruff"
+      ],
+      "command": "make",
+      "group": "build",
+      "label": "Run Ruff Linter",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "."
+      ],
+      "command": "mypy",
+      "group": "build",
+      "label": "Run MyPy Type Checker",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "run",
+        "--all-files"
+      ],
+      "command": "pre-commit",
+      "group": "build",
+      "label": "Run Pre-commit Hooks",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "-m",
+        "ondewo_nlu_webhook_server.server.__main__"
+      ],
+      "command": "python",
+      "group": "none",
+      "isBackground": true,
+      "label": "Start Webhook Server (Local)",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "build_server_image"
+      ],
+      "command": "make",
+      "group": "build",
+      "label": "Build Docker Image",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "run_ondewo_nlu_webhook_server_release_in_container"
+      ],
+      "command": "make",
+      "group": "none",
+      "isBackground": true,
+      "label": "Run Docker Compose",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "setup_developer_environment_locally"
+      ],
+      "command": "make",
+      "group": "none",
+      "label": "Setup Developer Environment",
+      "presentation": {
+        "panel": "dedicated",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    },
+    {
+      "args": [
+        "pip",
+        "install",
+        "--system",
+        "-e",
+        ".[dev]"
+      ],
+      "command": "uv",
+      "group": "none",
+      "label": "Install Dependencies",
+      "presentation": {
+        "panel": "shared",
+        "reveal": "always"
+      },
+      "problemMatcher": [],
+      "type": "shell"
+    }
+  ],
+  "version": "2.0.0"
+}

@@ -81,7 +81,26 @@ setup_developer_environment_locally: show_welcome install_apt install_submodules
 setup_developer_environment_in_devcontainer: show_welcome install_submodules install_dependencies_locally install_precommit_hooks ## Sets the full environment to develop in a devcontainer
 
 install_dependencies_locally: ## Install dependencies locally
-	pip install -r requirements-dev.txt
+	sudo uv pip install --system -e ".[dev]"
+	@echo "Checking Python version for 3.14 compatibility..."
+	@python_version=$$(python --version 2>&1 | awk '{print $$2}' | cut -d. -f1,2); \
+	if [ "$$python_version" = "3.14" ]; then \
+		echo "Python 3.14 detected. Rebuilding binary packages from source..."; \
+		$(MAKE) fix_python_314_compatibility; \
+	else \
+		echo "Python $$python_version detected. No special handling needed."; \
+	fi
+
+fix_python_314_compatibility: ## Fix Python 3.14 compatibility by rebuilding binary packages from source
+	# @echo "Uninstalling binary packages..."
+	# sudo uv pip uninstall --system pydantic pydantic-core grpcio grpcio-reflection grpcio-tools numpy || true
+	# @echo "Rebuilding pydantic-core from source (this may take ~4 minutes)..."
+	# sudo uv pip install --system --no-binary pydantic-core pydantic-core pydantic
+	# @echo "Rebuilding grpcio from source (this may take ~8 minutes)..."
+	# sudo uv pip install --system --no-binary grpcio grpcio grpcio-reflection grpcio-tools
+	# @echo "Rebuilding numpy from source (this may take ~1.5 minutes)..."
+	# sudo uv pip install --system --no-binary numpy numpy
+	# @echo "Python 3.14 compatibility fix completed!"
 
 install_submodules:
 	echo "No submodules needed"
@@ -101,8 +120,8 @@ install_apt:
 		wget\
 		parallel
 
-install_precommit_hooks: ## Installs pre-commit hooks and sets them up for the ondewo-csi-client repo
-	-pip install pre-commit
+install_precommit_hooks: ## Installs pre-commit hooks and sets them up for the ondewo-nlu-webhook-server-python repo
+	-uv pip install pre-commit
 	-@if command -v conda > /dev/null 2>&1; then \
 		conda -y install pre-commit; \
 	else \
@@ -121,8 +140,7 @@ copy_docker_config: ## Copies the users docker config to the project
 
 run_code_checks: ## Build code checks image and run
 	docker build -t ${IMAGE_TAG_CODE_CHECK} -f dockerfiles/code_checks/static-code-checks.Dockerfile .
-	docker run --rm ${IMAGE_TAG_CODE_CHECK} make flake8
-	docker run --rm ${IMAGE_TAG_CODE_CHECK} make mypy
+	docker run --rm ${IMAGE_TAG_CODE_CHECK} make ruff
 
 static_code_check_image:
 	DOCKER_BUILDKIT=1 docker build \
@@ -131,27 +149,22 @@ static_code_check_image:
 		--build-arg CACHEBUST=$$(date +%s) \
 		.
 
-mypy: ## Run mypy static code checking
-	@echo "---------------------------------------------"
-	@echo "START: Run mypy in pre-commit hook ..."
-	pre-commit run mypy --all-files
-	@echo "DONE: Run mypy in pre-commit hook."
-	@echo "---------------------------------------------"
-	@echo "START: Run mypy directly ..."
-	mypy --config-file=dockerfiles/code_checks/mypy.ini .
-	@echo "DONE: Run mypy directly"
-	@echo "---------------------------------------------"
+ruff: ## Runs ruff linting
+	uv run ruff check .
 
-mypy_in_docker: ## execute mypy in the static_code_check_image
-	make static_code_check_image IMAGE_CODE_TEST=ondewo-cai-code-test:local
-	docker run --rm ondewo-cai-code-test:local make mypy
+ruff-format: ## Runs ruff formatting check
+	uv run ruff format --check .
 
-flake8: ## Runs flake8
-	flake8 --config dockerfiles/code_checks/.flake8 .
+black: ## Runs black formatting check
+	uv run black --check .
 
-flake8_in_docker: ## execute mypy in the static_code_check_image
+format: ## Format code with ruff and black
+	uv run ruff format .
+	uv run black .
+
+ruff_in_docker: ## execute ruff in the static_code_check_image
 	make static_code_check_image IMAGE_CODE_TEST=ondewo-nlu-webhook-server-python-code-test:local
-	docker run --rm ondewo-cai-code-test:local make flake8
+	docker run --rm ondewo-nlu-webhook-server-python-code-test:local make ruff
 
 create_libraries_md:
 	@rm -f LIBRARIES.md
@@ -325,11 +338,7 @@ release: ## Automate the entire release process
 	git add ondewo_nlu_webhook_server
 	git add ondewo_nlu_webhook_server_custom_integration
 	git add RELEASE.md
-	git add requirements-ci-cd.txt
-	git add requirements-dev.txt
-	git add requirements-ondewo-clients.txt
-	git add requirements-static-code-checks.txt
-	git add requirements.txt
+	git add pyproject.toml
 	git add setup.cfg
 	git add setup.py
 	git add tests
@@ -378,7 +387,7 @@ checkout_defined_submodule_versions:  ## Update submodule versions
 #		PYPI
 
 build_package: ## Builds PYPI Package
-	python setup.py sdist
+	uv build
 	chmod a+rw dist -R
 
 upload_package: ## Uploads PYPI Package

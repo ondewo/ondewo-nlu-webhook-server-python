@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV LANG=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
@@ -31,7 +31,11 @@ RUN apt-get update -qq  \
   && apt-get purge -y --auto-remove \
   && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install --upgrade pip && pip install twine cython setuptools
+# Copy uv binary from official uv Docker image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install build tools using uv
+RUN uv pip install --system twine cython setuptools
 
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
     && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -43,8 +47,6 @@ WORKDIR /home/ondewo/
 
 COPY Makefile .
 
-COPY dockerfiles/code_checks/.flake8 .
-
 COPY .pre-commit-config.yaml .
 
 COPY CONTRIBUTING.md .
@@ -53,13 +55,9 @@ COPY LICENSE.md .
 
 COPY MANIFEST.in .
 
-COPY dockerfiles/code_checks/mypy.ini .
+COPY pyproject.toml .
 
-COPY requirements.txt .
-
-COPY requirements-ondewo-clients.txt .
-
-RUN pip install -r requirements.txt && pip install -r requirements-ondewo-clients.txt
+RUN uv pip install --system -e ".[dev]"
 
 COPY setup.py  .
 

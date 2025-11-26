@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
 
 SLOT_FILLING_CASE: str = "slot_filling"
 RESPONSE_REFINEMENT_CASE: str = "response_refinement"
 
-CALL_CASES: List[str] = [SLOT_FILLING_CASE, RESPONSE_REFINEMENT_CASE]
+CALL_CASES: list[str] = [SLOT_FILLING_CASE, RESPONSE_REFINEMENT_CASE]

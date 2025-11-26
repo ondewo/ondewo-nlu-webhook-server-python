@@ -32,7 +32,8 @@ from ondewo_nlu_webhook_server_custom_integration.custom_integration import (
 
 
 @Timer(
-    logger=log.info, log_arguments=False,
+    logger=log.info,
+    log_arguments=False,
     message="relay.py: call_custom_code: Elapsed time: {}",
 )
 async def call_custom_code(

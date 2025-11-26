@@ -14,9 +14,6 @@
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from bs4 import BeautifulSoup
@@ -29,7 +26,7 @@ from ondewo_nlu_webhook_server.server.base_models import (
 )
 
 
-def add_text_to_fulfillment(fulfillment_messages: List[Dict[str, Any]], text: str) -> List[Dict[str, Any]]:
+def add_text_to_fulfillment(fulfillment_messages: list[dict[str, Any]], text: str) -> list[dict[str, Any]]:
     """
     add an entry to the text section of the fulfillment messages
     if no text entries are in the messages, a text entry with the desired text will be created
@@ -45,11 +42,10 @@ def add_text_to_fulfillment(fulfillment_messages: List[Dict[str, Any]], text: st
         idx = get_index_of_text_entry(fulfillment_messages)
         fulfillment_messages[idx]["text"]["text"].append(text)
         return fulfillment_messages
-    else:
-        return _append_message_to_fulfillment(fulfillment_messages, text)
+    return _append_message_to_fulfillment(fulfillment_messages, text)
 
 
-def check_if_text_response_exist(fulfillment_messages: List[Dict[str, Any]]) -> bool:
+def check_if_text_response_exist(fulfillment_messages: list[dict[str, Any]]) -> bool:
     """
     Checks if a text response exists in the provided fulfillment messages.
 
@@ -65,19 +61,21 @@ def check_if_text_response_exist(fulfillment_messages: List[Dict[str, Any]]) -> 
         bool: True if any message contains a "text" field with content,
         otherwise False.
     """
-    if len(fulfillment_messages) >= 1:
-        if any("text" in message.keys() for message in fulfillment_messages):
-            for message in fulfillment_messages:
-                if "text" in message.keys():
-                    break
-            if "text" in message["text"].keys():  # type: ignore
-                return True
+    if len(fulfillment_messages) >= 1 and any("text" in message for message in fulfillment_messages):
+        message_with_text = None
+        for message in fulfillment_messages:
+            if "text" in message:
+                message_with_text = message
+                break
+        if message_with_text and "text" in message_with_text["text"]:  # type: ignore
+            return True
     return False
 
 
 def override_fulfillment_with_text(
-    fulfillment_messages: List[Dict[str, Any]], text: str,
-) -> List[Dict[str, Any]]:
+    fulfillment_messages: list[dict[str, Any]],
+    text: str,
+) -> list[dict[str, Any]]:
     """
     Overrides the current text in the fulfillment messages with the given text string.
 
@@ -98,14 +96,13 @@ def override_fulfillment_with_text(
         idx = get_index_of_text_entry(fulfillment_messages)
         fulfillment_messages[idx]["text"]["text"] = [text]
         return fulfillment_messages
-    else:
-        return _append_message_to_fulfillment(fulfillment_messages, text)
+    return _append_message_to_fulfillment(fulfillment_messages, text)
 
 
 def _append_message_to_fulfillment(
-    fulfillment_messages: List[Dict[str, Any]],
+    fulfillment_messages: list[dict[str, Any]],
     text: str,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Appends a new text message to the list of fulfillment messages.
 
@@ -137,7 +134,7 @@ def _append_message_to_fulfillment(
     return fulfillment_messages
 
 
-def get_index_of_text_entry(fulfillment_messages: List[Dict[str, Any]]) -> int:
+def get_index_of_text_entry(fulfillment_messages: list[dict[str, Any]]) -> int:
     """
     Searches for the index of the first message containing a "text" field in the
     given list of fulfillment messages.
@@ -158,16 +155,16 @@ def get_index_of_text_entry(fulfillment_messages: List[Dict[str, Any]]) -> int:
         ValueError: If no message containing a "text" field is found in the list.
     """
     for idx, entry in enumerate(fulfillment_messages):
-        if "text" in entry.keys():
+        if "text" in entry:
             return idx
     raise ValueError(f"Could not find text entries! messages: {str(fulfillment_messages)}")
 
 
 def create_new_context_name(
-    active_contexts: List[Context],
+    active_contexts: list[Context],
     context_name: str,
-    project_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    project_id: str | None = None,
+    session_id: str | None = None,
 ) -> str:
     """
     Creates a compatible context name from the given string by either extracting the correct project
@@ -203,11 +200,11 @@ def create_new_context_name(
 
 
 def replace_placeholder_in_text(
-    fulfillment_messages: List[Dict[str, Any]],
+    fulfillment_messages: list[dict[str, Any]],
     replace_text: str,
     active_intent: Intent,
-    parameters: Optional[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
+    parameters: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
     """
     Replaces the placeholder '<>' in the 'text' field of fulfillment messages with the provided ID value.
 
@@ -229,11 +226,11 @@ def replace_placeholder_in_text(
         List[Dict[str, Any]]: The updated list of fulfillment messages with the placeholder replaced.
 
     """
+    # pylint: disable=too-many-nested-blocks
     for message in fulfillment_messages:
         if "text" in message and "text" in message["text"]:
             for i, message_text in enumerate(message["text"]["text"]):
                 if "<" in message_text and ">" in message_text:
-
                     # Default Welcome Intent
                     if active_intent.displayName == "Default Welcome Intent":
                         message["text"]["text"][i] = message_text.replace("<organization_name>", replace_text)
@@ -242,21 +239,26 @@ def replace_placeholder_in_text(
                         url: str = "https://www.myurl.com/my-page"
                         data = extract_price(url)
                         assert parameters
-                        parameter_type: str = parameters['MyEntityType'][0]  # TODO: example entity type, use yours
+                        parameter_type: str = parameters["MyEntityType"][0]  # TODO: example entity type, use yours
                         price: str
-                        if parameter_type == "parameter1":  # TODO: example parameter, use yours
+                        # TODO: example parameter, use yours
+                        if parameter_type == "parameter1":  # pylint: disable=fixme
                             price = next(
                                 (
-                                    item["price"] for item in data['my-product-1'] if  # type: ignore
-                                    "my-product-category" in item["category"]
-                                ), None,
+                                    item["price"]
+                                    for item in data["my-product-1"]  # type: ignore
+                                    if "my-product-category" in item["category"]
+                                ),
+                                None,
                             )[:-2]
                         else:
                             price = next(
                                 (
-                                    item["price"] for item in data['my-product-2'] if  # type: ignore
-                                    "my-product-category" in item["category"]
-                                ), None,
+                                    item["price"]
+                                    for item in data["my-product-2"]  # type: ignore
+                                    if "my-product-category" in item["category"]
+                                ),
+                                None,
                             )[:-2]
 
                         assert price is not None
@@ -269,7 +271,7 @@ def replace_placeholder_in_text(
     return fulfillment_messages
 
 
-def extract_price(url: str) -> Dict[str, List[Dict[str, str]]]:
+def extract_price(url: str) -> dict[str, list[dict[str, str]]]:
     """
     Extracts price information from a webpage containing a structured HTML table.
 
@@ -290,7 +292,7 @@ def extract_price(url: str) -> Dict[str, List[Dict[str, str]]]:
         requests.exceptions.RequestException: If there is an issue with the HTTP request.
         AssertionError: If the expected table or rows are not found in the HTML.
     """
-    response = get(url)
+    response = get(url, timeout=30)
     response.raise_for_status()  # Ensure the request was successful
 
     soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
@@ -298,10 +300,10 @@ def extract_price(url: str) -> Dict[str, List[Dict[str, str]]]:
     # Find the table containing the data
     table = soup.find("div", class_="table-box").find("table", class_="table")  # type: ignore
     assert table is not None
-    rows = table.find_all("tr", class_="tablerow")  # type:ignore
+    rows = table.find_all("tr", class_="tablerow")  # type: ignore
     assert rows is not None
 
-    values: List = []
+    values: list = []
     # Parse the rows for data
     for row in rows:
         cells = row.find_all("td")

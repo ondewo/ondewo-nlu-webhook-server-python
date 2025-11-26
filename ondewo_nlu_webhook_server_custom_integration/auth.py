@@ -17,8 +17,6 @@ import os
 from typing import (
     Any,
     Optional,
-    Set,
-    Tuple,
 )
 
 import grpc  # type: ignore
@@ -33,12 +31,12 @@ from ondewo_nlu_webhook_server.server.base_models import (
     LoginResponse,
 )
 
-ONDEWO_NLU_CAI_GRPC_CERT: str = os.getenv('ONDEWO_NLU_CAI_GRPC_CERT', '').strip()
-ONDEWO_NLU_CAI_HOST: str = os.getenv('ONDEWO_NLU_CAI_HOST', '').strip()
-ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN: str = os.getenv('ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN', '').strip()
-ONDEWO_NLU_CAI_PORT: str = os.getenv('ONDEWO_NLU_CAI_PORT', '').strip()
-ONDEWO_NLU_CAI_USER_NAME: str = os.getenv('ONDEWO_NLU_CAI_USER_NAME', '').strip()
-ONDEWO_NLU_CAI_USER_PASS: str = os.getenv('ONDEWO_NLU_CAI_USER_PASS', '').strip()
+ONDEWO_NLU_CAI_GRPC_CERT: str = os.getenv("ONDEWO_NLU_CAI_GRPC_CERT", "").strip()
+ONDEWO_NLU_CAI_HOST: str = os.getenv("ONDEWO_NLU_CAI_HOST", "").strip()
+ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN: str = os.getenv("ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN", "").strip()
+ONDEWO_NLU_CAI_PORT: str = os.getenv("ONDEWO_NLU_CAI_PORT", "").strip()
+ONDEWO_NLU_CAI_USER_NAME: str = os.getenv("ONDEWO_NLU_CAI_USER_NAME", "").strip()
+ONDEWO_NLU_CAI_USER_PASS: str = os.getenv("ONDEWO_NLU_CAI_USER_PASS", "").strip()
 
 ONDEWO_BPI_CAI_MAX_MESSAGE_LENGTH: int = 10 * 1024 * 1024
 
@@ -81,11 +79,11 @@ service_config_json: str = json.dumps(
     },
 )
 
-options: Set[Tuple[str, Any]] = {
+options: set[tuple[str, Any]] = {
     ("grpc.max_send_message_length", ONDEWO_BPI_CAI_MAX_MESSAGE_LENGTH),
     ("grpc.max_receive_message_length", ONDEWO_BPI_CAI_MAX_MESSAGE_LENGTH),
     # Example of setting KeepAlive options through generic channel_args
-    ("grpc.keepalive_time_ms", 2 ** 31 - 1),
+    ("grpc.keepalive_time_ms", 2**31 - 1),
     ("grpc.keepalive_timeout_ms", 60000),
     ("grpc.keepalive_permit_without_calls", False),
     ("grpc.http2.max_pings_without_data", 4),
@@ -105,12 +103,12 @@ nlu_client_config: ClientConfig = ClientConfig(
 
 nlu_client: NluClient = NluClient(
     config=nlu_client_config,
-    use_secure_channel=True if nlu_client_config.grpc_cert else False,
+    use_secure_channel=bool(nlu_client_config.grpc_cert),
     options=options,  # Pass the gRPC options here
 )
 
 
-def login() -> Optional[LoginResponse]:
+def login() -> LoginResponse | None:
     """Logs into the ONDEWO NLU service.
 
     Sends a login request to authenticate the user and retrieves the authentication token.
@@ -139,7 +137,7 @@ def login() -> Optional[LoginResponse]:
         raise
 
 
-def get_intent() -> Optional[intent_pb2.Intent]:
+def get_intent() -> intent_pb2.Intent | None:
     """Retrieves intent information from the ONDEWO NLU service.
 
     Calls the GetIntent API with a specific intent ID and language code.

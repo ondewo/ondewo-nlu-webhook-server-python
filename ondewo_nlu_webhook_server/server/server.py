@@ -28,9 +28,9 @@ A request is sent by ondewo-cai when an intent is matched where a webhook call i
 If server.py is called directly, it will create the server using flask itself with debugging activated.
 This is not recommended for production
 """
+
 import json
 from json import JSONDecodeError
-from typing import Dict
 
 from fastapi import (
     APIRouter,
@@ -70,14 +70,14 @@ welcome_message: str = (
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def verify_token(token=Depends(oauth2_scheme)) -> str:  # type:ignore
+def verify_token(token=Depends(oauth2_scheme)) -> str:  # type: ignore
     if token != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return token  # type:ignore
+    return token  # type: ignore
 
 
 # endregion security: Bearer authentication
@@ -86,7 +86,7 @@ def verify_token(token=Depends(oauth2_scheme)) -> str:  # type:ignore
 security = HTTPBasic()
 
 
-def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  # type:ignore
+def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  # type: ignore
     if (
         credentials.username != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
         or credentials.password != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
@@ -96,19 +96,20 @@ def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials  # type:ignore
+    return credentials  # type: ignore
 
 
 # endregion security: Http Basic authentication
 
+
 @router.post("/{call_case}", response_model=WebhookResponse)
-@Timer(logger=log.debug, log_arguments=True, message='call_case. Elapsed time: {:.5f}')
+@Timer(logger=log.debug, log_arguments=True, message="call_case. Elapsed time: {:.5f}")
 async def call_case(
     call_case: str,
     request: Request,
     # NOTE: activate token or http basic credentials authentication
     # token: str = Depends(verify_token),  # type: ignore
-    credentials: HTTPBasicCredentials = Depends(verify_credentials),  # type:ignore
+    credentials: HTTPBasicCredentials = Depends(verify_credentials),  # type: ignore
 ) -> WebhookResponse:
     """
     Handles HTTP POST requests sent to [server_address]/<call_case>.
@@ -167,7 +168,7 @@ async def call_case(
     if call_case not in CALL_CASES:
         raise HTTPException(status_code=400, detail=f"Unknown call_case: {call_case}")
 
-    request_json: Dict
+    request_json: dict
 
     try:
         request_json = await request.json()
@@ -178,7 +179,7 @@ async def call_case(
     webhook_request: WebhookRequest
     if isinstance(request_json, str):
         # ondewo-nlu-cai sends the request as a string hence we need to load it
-        request_json_loaded: Dict = json.loads(request_json)
+        request_json_loaded: dict = json.loads(request_json)
         try:
             webhook_request = WebhookRequest(**request_json_loaded)
         except ValidationError:
@@ -200,10 +201,9 @@ async def call_case(
     webhook_response: WebhookResponse = WebhookResponse(
         fulfillmentText=webhook_request.queryResult.fulfillmentText,
         fulfillmentMessages=(
-            webhook_request.queryResult.fulfillmentMessages
-            if webhook_request.queryResult.fulfillmentMessages else []
+            webhook_request.queryResult.fulfillmentMessages if webhook_request.queryResult.fulfillmentMessages else []
         ),
-        source='',
+        source="",
         payload={},
         outputContexts=webhook_request.queryResult.outputContexts,
         followupEventInput=EventInput(),
@@ -230,8 +230,8 @@ async def call_case(
 
 # async def index(_: str = Depends(get_current_user)) -> Dict[str, str]:
 @router.get("/")
-@Timer(logger=log.debug, log_arguments=False, message='index. Elapsed time: {:.5f}')
-async def index() -> Dict[str, str]:
+@Timer(logger=log.debug, log_arguments=False, message="index. Elapsed time: {:.5f}")
+async def index() -> dict[str, str]:
     """
     Provides a welcome message when accessing the root endpoint.
     """
@@ -239,5 +239,5 @@ async def index() -> Dict[str, str]:
 
 
 @router.get("/health")
-def health_check() -> Dict[str, str]:
+def health_check() -> dict[str, str]:
     return {"status": "ok"}

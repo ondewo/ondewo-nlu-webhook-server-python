@@ -15,15 +15,13 @@
 """
 Definitions of json dataclass objects used for communication from & to the webhook server
 """
+
+from __future__ import annotations
+
+from collections.abc import Callable
 from enum import Enum
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Type,
 )
 
 from pydantic import (
@@ -37,15 +35,15 @@ from ondewo_nlu_webhook_server.language_code import LanguageCode
 
 class WebhookResponseModel(BaseModel):
     fulfillmentText: str
-    fulfillmentMessages: list[Dict[str, Any]]
+    fulfillmentMessages: list[dict[str, Any]]
     source: str
-    payload: Dict[str, Any]
-    outputContexts: list[Dict[str, Any]]
-    followupEventInput: Dict[str, Any]
+    payload: dict[str, Any]
+    outputContexts: list[dict[str, Any]]
+    followupEventInput: dict[str, Any]
 
 
 class TextMessage(BaseModel):
-    text: List[str]
+    text: list[str]
 
 
 class FulfillmentMessage(BaseModel):
@@ -67,41 +65,41 @@ class Parameter(BaseModel):
 class Context(BaseModel):
     name: str
     lifespanCount: int
-    parameters: Dict[str, Parameter]
-    lifespanTime: Optional[float] = None
+    parameters: dict[str, Parameter]
+    lifespanTime: float | None = None
 
     class Config:
         # This will tell Pydantic to use the `Parameter` model for `Parameter` parsing
         # and handle nested objects automatically
-        json_encoders: Dict[Type[Any], Callable[[Any], Any]] = {
+        json_encoders: dict[type[Any], Callable[[Any], Any]] = {
             Parameter: lambda v: v.dict(),  # Convert Parameter object back to dict if needed
         }
 
 
 class IntentMessageText(BaseModel):
-    text: Optional[List[str]]
+    text: list[str] | None
 
 
 class IntentMessageImage(BaseModel):
-    image_uri: Optional[str]
-    accessibility_text: Optional[str]
+    image_uri: str | None
+    accessibility_text: str | None
 
 
 class IntentMessageQuickReplies(BaseModel):
-    title: Optional[str]
-    quick_replies: Optional[List[str]]
+    title: str | None
+    quick_replies: list[str] | None
 
 
 class IntentMessageCardButton(BaseModel):
-    text: Optional[str]
-    postback: Optional[str]
+    text: str | None
+    postback: str | None
 
 
 class IntentMessageCard(BaseModel):
-    title: Optional[str]
-    subtitle: Optional[str]
-    image_uri: Optional[str]
-    buttons: Optional[List[IntentMessageCardButton]]
+    title: str | None
+    subtitle: str | None
+    image_uri: str | None
+    buttons: list[IntentMessageCardButton] | None
 
 
 class IntentMessageBasicCardButtonOpenUriAction(BaseModel):
@@ -114,21 +112,21 @@ class IntentMessageBasicCardButton(BaseModel):
 
 
 class IntentMessageBasicCard(BaseModel):
-    title: Optional[str]
-    subtitle: Optional[str]
-    formatted_text: Optional[str]
-    image: Optional[IntentMessageImage]
-    buttons: Optional[List[IntentMessageBasicCardButton]]
+    title: str | None
+    subtitle: str | None
+    formatted_text: str | None
+    image: IntentMessageImage | None
+    buttons: list[IntentMessageBasicCardButton] | None
 
 
 class IntentMessageSimpleResponse(BaseModel):
-    text_to_speech: Optional[str]
-    ssml: Optional[str]
-    display_text: Optional[str]
+    text_to_speech: str | None
+    ssml: str | None
+    display_text: str | None
 
 
 class IntentMessageSimpleResponses(BaseModel):
-    simple_responses: List[IntentMessageSimpleResponse]
+    simple_responses: list[IntentMessageSimpleResponse]
 
 
 class IntentMessageSuggestion(BaseModel):
@@ -136,7 +134,7 @@ class IntentMessageSuggestion(BaseModel):
 
 
 class IntentMessageSuggestions(BaseModel):
-    suggestions: List[IntentMessageSuggestion]
+    suggestions: list[IntentMessageSuggestion]
 
 
 class IntentMessageLinkOutSuggestion(BaseModel):
@@ -146,103 +144,103 @@ class IntentMessageLinkOutSuggestion(BaseModel):
 
 class IntentMessageSelectItemInfo(BaseModel):
     key: str
-    synonyms: Optional[List[str]]
+    synonyms: list[str] | None
 
 
 class IntentMessageCarouselSelectItem(BaseModel):
     info: IntentMessageSelectItemInfo
     title: str
-    description: Optional[str] = None
-    image: Optional[IntentMessageImage] = None
+    description: str | None = None
+    image: IntentMessageImage | None = None
 
 
 class IntentMessageCarouselSelect(BaseModel):
-    items: List[IntentMessageCarouselSelectItem]
+    items: list[IntentMessageCarouselSelectItem]
 
 
 class IntentMessageListSelectItem(BaseModel):
     info: IntentMessageSelectItemInfo
     title: str
-    description: Optional[str] = None
-    image: Optional[IntentMessageImage] = None
+    description: str | None = None
+    image: IntentMessageImage | None = None
 
 
 class IntentMessageListSelect(BaseModel):
-    title: Optional[str] = None
-    items: List[IntentMessageListSelectItem]
+    title: str | None = None
+    items: list[IntentMessageListSelectItem]
 
 
 class IntentMessageHTMLText(BaseModel):
-    text: List[str]
+    text: list[str]
 
 
 class IntentMessageVideo(BaseModel):
-    uri: Optional[str] = None
-    accessibility_text: Optional[str] = None
+    uri: str | None = None
+    accessibility_text: str | None = None
 
 
 class IntentMessageAudio(BaseModel):
-    uri: Optional[str] = None
-    accessibility_text: Optional[str] = None
+    uri: str | None = None
+    accessibility_text: str | None = None
 
 
 class IntentMessagePlatformEnum(str, Enum):
-    PLATFORM_UNSPECIFIED = 'PLATFORM_UNSPECIFIED'
-    FACEBOOK = 'FACEBOOK'
-    SLACK = 'SLACK'
-    TELEGRAM = 'TELEGRAM'
-    KIK = 'KIK'
-    SKYPE = 'SKYPE'
-    LINE = 'LINE'
-    VIBER = 'VIBER'
-    ACTIONS_ON_GOOGLE = 'ACTIONS_ON_GOOGLE'
-    PLACEHOLDER_1 = 'PLACEHOLDER_1'
-    PLACEHOLDER_2 = 'PLACEHOLDER_2'
-    PLACEHOLDER_3 = 'PLACEHOLDER_3'
-    PLACEHOLDER_4 = 'PLACEHOLDER_4'
-    PLACEHOLDER_5 = 'PLACEHOLDER_5'
-    PLACEHOLDER_6 = 'PLACEHOLDER_6'
-    PLACEHOLDER_7 = 'PLACEHOLDER_7'
-    PLACEHOLDER_8 = 'PLACEHOLDER_8'
-    PLACEHOLDER_9 = 'PLACEHOLDER_9'
-    PLACEHOLDER_10 = 'PLACEHOLDER_10'
-    PLACEHOLDER_11 = 'PLACEHOLDER_11'
-    PLACEHOLDER_12 = 'PLACEHOLDER_12'
-    PLACEHOLDER_13 = 'PLACEHOLDER_13'
-    PLACEHOLDER_14 = 'PLACEHOLDER_14'
-    PLACEHOLDER_15 = 'PLACEHOLDER_15'
-    PLACEHOLDER_16 = 'PLACEHOLDER_16'
-    PLACEHOLDER_17 = 'PLACEHOLDER_17'
-    PLACEHOLDER_18 = 'PLACEHOLDER_18'
-    PLACEHOLDER_19 = 'PLACEHOLDER_19'
-    PLACEHOLDER_20 = 'PLACEHOLDER_20'
+    PLATFORM_UNSPECIFIED = "PLATFORM_UNSPECIFIED"
+    FACEBOOK = "FACEBOOK"
+    SLACK = "SLACK"
+    TELEGRAM = "TELEGRAM"
+    KIK = "KIK"
+    SKYPE = "SKYPE"
+    LINE = "LINE"
+    VIBER = "VIBER"
+    ACTIONS_ON_GOOGLE = "ACTIONS_ON_GOOGLE"
+    PLACEHOLDER_1 = "PLACEHOLDER_1"
+    PLACEHOLDER_2 = "PLACEHOLDER_2"
+    PLACEHOLDER_3 = "PLACEHOLDER_3"
+    PLACEHOLDER_4 = "PLACEHOLDER_4"
+    PLACEHOLDER_5 = "PLACEHOLDER_5"
+    PLACEHOLDER_6 = "PLACEHOLDER_6"
+    PLACEHOLDER_7 = "PLACEHOLDER_7"
+    PLACEHOLDER_8 = "PLACEHOLDER_8"
+    PLACEHOLDER_9 = "PLACEHOLDER_9"
+    PLACEHOLDER_10 = "PLACEHOLDER_10"
+    PLACEHOLDER_11 = "PLACEHOLDER_11"
+    PLACEHOLDER_12 = "PLACEHOLDER_12"
+    PLACEHOLDER_13 = "PLACEHOLDER_13"
+    PLACEHOLDER_14 = "PLACEHOLDER_14"
+    PLACEHOLDER_15 = "PLACEHOLDER_15"
+    PLACEHOLDER_16 = "PLACEHOLDER_16"
+    PLACEHOLDER_17 = "PLACEHOLDER_17"
+    PLACEHOLDER_18 = "PLACEHOLDER_18"
+    PLACEHOLDER_19 = "PLACEHOLDER_19"
+    PLACEHOLDER_20 = "PLACEHOLDER_20"
 
 
-INTENT_MESSAGE_PLATFORM_ENUM_SET: Set[str] = {enum_type for enum_type in IntentMessagePlatformEnum}
+INTENT_MESSAGE_PLATFORM_ENUM_SET: set[str] = set(IntentMessagePlatformEnum)
 
 
 class IntentMessage(BaseModel):
-    name: Optional[str] = None
-    language_code: Optional[str] = None
-    text: Optional[IntentMessageText] = None
-    image: Optional[IntentMessageImage] = None
-    quick_replies: Optional[IntentMessageQuickReplies] = None
-    card: Optional[IntentMessageCard] = None
-    payload: Optional[dict] = None
-    simple_responses: Optional[IntentMessageSimpleResponses] = None
-    basic_card: Optional[IntentMessageBasicCard] = None
-    suggestions: Optional[IntentMessageSuggestions] = None
-    link_out_suggestion: Optional[IntentMessageLinkOutSuggestion] = None
-    list_select: Optional[IntentMessageListSelect] = None
-    carousel_select: Optional[IntentMessageCarouselSelect] = None
-    html_text: Optional[IntentMessageHTMLText] = None
-    video: Optional[IntentMessageVideo] = None
-    audio: Optional[IntentMessageAudio] = None
-    platform: Optional[str] = None
-    is_prompt: Optional[bool] = None
+    name: str | None = None
+    language_code: str | None = None
+    text: IntentMessageText | None = None
+    image: IntentMessageImage | None = None
+    quick_replies: IntentMessageQuickReplies | None = None
+    card: IntentMessageCard | None = None
+    payload: dict | None = None
+    simple_responses: IntentMessageSimpleResponses | None = None
+    basic_card: IntentMessageBasicCard | None = None
+    suggestions: IntentMessageSuggestions | None = None
+    link_out_suggestion: IntentMessageLinkOutSuggestion | None = None
+    list_select: IntentMessageListSelect | None = None
+    carousel_select: IntentMessageCarouselSelect | None = None
+    html_text: IntentMessageHTMLText | None = None
+    video: IntentMessageVideo | None = None
+    audio: IntentMessageAudio | None = None
+    platform: str | None = None
+    is_prompt: bool | None = None
 
     @classmethod
-    @field_validator('platform')
+    @field_validator("platform")
     def validate_platform(cls, value: str) -> str:
         if value and value not in INTENT_MESSAGE_PLATFORM_ENUM_SET:
             raise ValueError(
@@ -253,19 +251,19 @@ class IntentMessage(BaseModel):
 
 
 class QueryResult(BaseModel):
-    fulfillmentMessages: Optional[List[IntentMessage]] = None
+    fulfillmentMessages: list[IntentMessage] | None = None
     fulfillmentText: str
     intent: Intent
     intentDetectionConfidence: float
     languageCode: str
-    outputContexts: Optional[List[Context]] = None
-    parameters: Optional[Dict[str, Any]] = None
+    outputContexts: list[Context] | None = None
+    parameters: dict[str, Any] | None = None
     queryText: str
 
     class Config:
         # This will tell Pydantic to use the `Context` model for `outputContexts` parsing
         # and handle nested objects automatically
-        json_encoders: Dict[Type[Any], Callable[[Any], Any]] = {
+        json_encoders: dict[type[Any], Callable[[Any], Any]] = {
             Context: lambda v: v.dict(),  # Convert Context object back to dict if needed
             IntentMessage: lambda v: v.dict(),
             IntentMessageText: lambda v: v.dict(),
@@ -293,75 +291,75 @@ class QueryResult(BaseModel):
 
 
 class QueryParams(BaseModel):
-    datastreamId: Optional[str] = None
-    identifiedUserId: Optional[str] = None
-    labels: Optional[List[str]] = None
-    originId: Optional[str] = None
-    propertyId: Optional[str] = None
-    timeZone: Optional[str] = None
+    datastreamId: str | None = None
+    identifiedUserId: str | None = None
+    labels: list[str] | None = None
+    originId: str | None = None
+    propertyId: str | None = None
+    timeZone: str | None = None
 
 
 class EventInput(BaseModel):
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    name: Optional[str] = None
-    languageCode: Optional[str] = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    name: str | None = None
+    languageCode: str | None = None
 
 
 class TextInput(BaseModel):
-    text: Optional[str] = None
-    languageCode: Optional[str] = None
+    text: str | None = None
+    languageCode: str | None = None
 
 
 class InputAudioConfig(BaseModel):
-    audio_encoding: Optional[str] = None
-    sample_rate_hertz: Optional[int] = None
-    language_code: Optional[str] = None
-    phrase_hints: Optional[List[str]] = None
+    audio_encoding: str | None = None
+    sample_rate_hertz: int | None = None
+    language_code: str | None = None
+    phrase_hints: list[str] | None = None
 
 
 class DocumentFileResource(BaseModel):
-    name: Optional[str] = None
-    display_name: Optional[str] = None
-    bytes: Optional[bytes] = None
+    name: str | None = None
+    display_name: str | None = None
+    data: bytes | None = None
 
 
 class AudioFileResource(BaseModel):
-    name: Optional[str] = None
-    bytes: Optional[bytes] = None
-    language: Optional[str] = None
-    duration_in_s: Optional[float] = None
-    sample_rate: Optional[int] = None
-    audio_file_resource_type: Optional[str] = None
-    transcriptions: Optional[List[dict]] = None
+    name: str | None = None
+    data: bytes | None = None
+    language: str | None = None
+    duration_in_s: float | None = None
+    sample_rate: int | None = None
+    audio_file_resource_type: str | None = None
+    transcriptions: list[dict] | None = None
 
 
 class ImageFileResource(BaseModel):
-    name: Optional[str] = None
-    display_name: Optional[str] = None
-    bytes: Optional[bytes] = None
+    name: str | None = None
+    display_name: str | None = None
+    data: bytes | None = None
 
 
 class VideoFileResource(BaseModel):
-    name: Optional[str] = None
-    display_name: Optional[str] = None
-    bytes: Optional[bytes] = None
-    duration_in_s: Optional[float] = None
-    resolution: Optional[str] = None
-    frame_rate: Optional[float] = None
+    name: str | None = None
+    display_name: str | None = None
+    data: bytes | None = None
+    duration_in_s: float | None = None
+    resolution: str | None = None
+    frame_rate: float | None = None
 
 
 class FileResources(BaseModel):
-    document_file_resource: Optional[DocumentFileResource] = None
-    audio_file_resource: Optional[AudioFileResource] = None
-    image_file_resource: Optional[ImageFileResource] = None
-    video_file_resource: Optional[VideoFileResource] = None
+    document_file_resource: DocumentFileResource | None = None
+    audio_file_resource: AudioFileResource | None = None
+    image_file_resource: ImageFileResource | None = None
+    video_file_resource: VideoFileResource | None = None
 
 
 class QueryInput(BaseModel):
-    text: Optional[TextInput] = None
-    audio_config: Optional[InputAudioConfig] = None
-    event: Optional[EventInput] = None
-    file_resources: Optional[List[FileResources]] = None
+    text: TextInput | None = None
+    audio_config: InputAudioConfig | None = None
+    event: EventInput | None = None
+    file_resources: list[FileResources] | None = None
 
 
 class Payload(BaseModel):
@@ -376,7 +374,7 @@ class OriginalDetectIntentRequest(BaseModel):
 
 class GetIntentRequest(BaseModel):
     name: str
-    languageCode: Optional[str] = ""
+    languageCode: str | None = ""
 
 
 class LoginRequest(BaseModel):
@@ -391,10 +389,10 @@ class LoginResponse(BaseModel):
 
 class WebhookResponse(BaseModel):
     fulfillmentText: str
-    fulfillmentMessages: List[IntentMessage]
+    fulfillmentMessages: list[IntentMessage]
     source: str
-    payload: Dict[str, Any]
-    outputContexts: Optional[List[Context]]
+    payload: dict[str, Any]
+    outputContexts: list[Context] | None
     followupEventInput: EventInput  # TODO: make better so pydantic can parse full objects according to proto
     """
     webhook response json dataclass for communication from the webhook server to ondewo-cai
@@ -446,27 +444,28 @@ class WebhookRequest(BaseModel):
         session                                # session ID
         headers                                # optional, list of headers sent with the request
     """
-    headers: Optional[Dict[str, str]] = Field(default_factory=dict)  # type:ignore
+
+    headers: dict[str, str] | None = Field(default_factory=dict)  # type: ignore
     detectIntentRequest: OriginalDetectIntentRequest
     queryResult: QueryResult
     responseId: str
     session: str
 
     @classmethod
-    def create_sample_request(cls, language_code: LanguageCode = LanguageCode.en_US) -> 'WebhookRequest':
+    def create_sample_request(cls, language_code: LanguageCode = LanguageCode.en_US) -> WebhookRequest:
         language_code_str: str = language_code.value
         return cls(
-            responseId='testID',
+            responseId="testID",
             queryResult=QueryResult(
-                queryText='This is a question',
+                queryText="This is a question",
                 parameters={},
-                fulfillmentText='',
+                fulfillmentText="",
                 fulfillmentMessages=[
                     IntentMessage(
                         text=IntentMessageText(
                             text=[
-                                'first message',
-                                'second message',
+                                "first message",
+                                "second message",
                             ],
                         ),
                         platform=IntentMessagePlatformEnum.PLATFORM_UNSPECIFIED.value,
@@ -474,24 +473,24 @@ class WebhookRequest(BaseModel):
                 ],
                 outputContexts=[
                     Context(
-                        name='context name 1',
+                        name="context name 1",
                         lifespanCount=1,
                         parameters={
-                            'parameter1': Parameter(value='1', value_original='1', display_name='1', name=''),
-                            'parameter2': Parameter(value='2', value_original='2', display_name='2', name=''),
+                            "parameter1": Parameter(value="1", value_original="1", display_name="1", name=""),
+                            "parameter2": Parameter(value="2", value_original="2", display_name="2", name=""),
                         },
                     ),
                     Context(
-                        name='context name 2',
+                        name="context name 2",
                         lifespanCount=1,
                         parameters={
-                            'parameter1': Parameter(value='1', value_original='1', display_name='1', name=''),
+                            "parameter1": Parameter(value="1", value_original="1", display_name="1", name=""),
                         },
                     ),
                 ],
                 intent=Intent(
-                    name='projects/<PROJECT-ID>/sessions/<SESSION-ID>/agent/intents/<INTENT-ID>',
-                    displayName='some intent name',
+                    name="projects/<PROJECT-ID>/sessions/<SESSION-ID>/agent/intents/<INTENT-ID>",
+                    displayName="some intent name",
                 ),
                 intentDetectionConfidence=99,
                 languageCode=language_code_str,
@@ -501,7 +500,7 @@ class WebhookRequest(BaseModel):
                     queryInput=QueryInput(
                         text=TextInput(
                             languageCode=language_code_str,
-                            text='This is a question',
+                            text="This is a question",
                         ),
                     ),
                     queryParams=QueryParams(
@@ -512,12 +511,12 @@ class WebhookRequest(BaseModel):
                         propertyId=None,
                         timeZone=None,
                     ),
-                    session='projects/<PROJECT-ID>/sessions/<SESSION-ID>',
+                    session="projects/<PROJECT-ID>/sessions/<SESSION-ID>",
                 ),
             ),
             # Ensure 'payload' field is provided
-            session='/path/of/session',
+            session="/path/of/session",
             headers={
-                'header1': 'value1',
+                "header1": "value1",
             },
         )

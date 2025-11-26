@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from base64 import b64encode
+from collections.abc import Generator
 import os
 import time
-from base64 import b64encode
 from typing import (
     Any,
-    Dict,
-    Generator,
 )
 
-import pytest
 from docker import (
     APIClient,
     from_env,
@@ -33,6 +31,7 @@ from docker.errors import (
 from docker.models.containers import Container
 from docker.models.images import Image
 from ondewo.logging.logger import logger_console as log
+import pytest
 
 # Container and image tag constants
 IMAGE_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME", "")
@@ -47,7 +46,8 @@ class CustomDockerClient(APIClient):
     def __init__(
         self,
         container: Container,
-        *args: Any, **kwargs: Any,
+        *args: Any,
+        **kwargs: Any,
     ):
         super().__init__(*args, **kwargs)
         self.container_id = container.id
@@ -56,7 +56,7 @@ class CustomDockerClient(APIClient):
         """
         Read the health status of the container.
         """
-        return str(self.inspect_container(self.container_id)['State']['Health']['Status'])
+        return str(self.inspect_container(self.container_id)["State"]["Health"]["Status"])
 
     def check_health(self) -> bool:
         """
@@ -81,16 +81,16 @@ def webhook_server_for_testing() -> Generator:
     try:
         container = docker_client.containers.get(CONTAINER_NAME)
         container.remove(force=True)  # force=True if you want to remove a running container
-        log.debug(f"Container {CONTAINER_NAME} has been removed.")
+        log.debug("Container %s has been removed.", CONTAINER_NAME)
     except NotFound:
-        log.debug(f"Container {CONTAINER_NAME} not found.")
+        log.debug("Container %s not found.", CONTAINER_NAME)
     except APIError as e:
-        log.debug(f"Error removing container {CONTAINER_NAME}: {e}")
+        log.debug("Error removing container %s: %s", CONTAINER_NAME, e)
 
     # Build the container image
     log.debug("Building Docker image...")
     image: Image
-    image, build_logs = docker_client.images.build(
+    image, _ = docker_client.images.build(
         # Adjust the path to where the Dockerfile is located
         path=".",
         dockerfile="dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile",
@@ -103,9 +103,9 @@ def webhook_server_for_testing() -> Generator:
 
     # Deploy the container with ports mapped
     log.debug("Deploying Docker container...")
-    webhook_server_port: int = int(os.getenv('ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT', ""))
+    webhook_server_port: int = int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", ""))
     # Filter necessary environment variables if needed
-    environment: Dict[str, str] = {
+    environment: dict[str, str] = {
         key: value for key, value in os.environ.items() if key.startswith("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON")
     }
     container = docker_client.containers.run(
@@ -142,19 +142,19 @@ def webhook_server_for_testing() -> Generator:
     container.remove()
 
     # Optionally, remove the image
-    log.debug(f"Removing Docker image: {IMAGE_NAME}")
+    log.debug("Removing Docker image: %s", IMAGE_NAME)
     docker_client.images.remove(IMAGE_NAME)
 
 
 @pytest.fixture
-def headers() -> Dict[str, str]:
+def headers() -> dict[str, str]:
     # Get username and password from environment
     username: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME", "")
     password: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD", "")
 
     # Create the HTTP Basic Auth header
     credentials: str = f"{username}:{password}"
-    encoded_credentials: str = b64encode(credentials.encode('utf-8')).decode('utf-8')
+    encoded_credentials: str = b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     # Return headers including the Basic Auth header
     return {"Authorization": f"Basic {encoded_credentials}"}

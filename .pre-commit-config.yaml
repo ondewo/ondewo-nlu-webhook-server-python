@@ -22,8 +22,8 @@
 #    pre-commit run autopep8 --files mal_formatted_file.py                                  #
 #############################################################################################
 
-exclude: '^notebooks/'
-# Updated to exclude only the notebooks directory
+exclude: '^(notebooks/|\.venv/)'
+# Updated to exclude notebooks and .venv directories
 
 fail_fast: false
 # "fail_fast: false" means pre-commit continues to run hooks after the first failure
@@ -31,7 +31,7 @@ fail_fast: false
 repos:
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # - id: no-commit-to-branch  # Protect specific branches from direct checkins
       # args: [ --branch, master ]
@@ -54,46 +54,28 @@ repos:
       - id: name-tests-test # name pytest files correctly
         args: [ --pytest-test-first ]
         exclude: (^tests/pytest_utils/plugins)
-      - id: requirements-txt-fixer  # Sorts the requirement.txt files' content
-        files: 'requirements*\.txt$'
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.6
     hooks:
-      - id: mypy
-        args: [ '--config-file=dockerfiles/code_checks/mypy.ini' ]
-        exclude: '^notebooks/'
-        # Use language: system to run Mypy git repo's existing virtual environment
-        # instead of mypy's own virtual environment. Necessary to find types-.* packages
-        # Replace language: python in your hook definition with language: system.
-        # Remove the additional_dependencies line and install Mypy into your
-        # environment directly. Now, Pre-commit will not create a separate virtualenv
-        # for the hook and will run it in whatever environment you happen to be in when
-        # you run git commit or pre-commit run => https://jaredkhan.com/blog/mypy-pre-commit
-        language: system
-        # use require_serial so that script
-        # is only called once per commit
-        require_serial: true
-        # Print the number of files as sanity-check
-        verbose: true
-        types: [ python ]
+      # Run ruff linter (checks code quality)
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --line-length=120]
+        exclude: '^(notebooks/|\.venv/)'
+      # Run ruff formatter (faster alternative to black, but we keep black for consistency)
+      - id: ruff-format
+        args: [--line-length=120]
+        exclude: '^(notebooks/|\.venv/)'
 
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
     hooks:
-      - id: flake8
-        args: [ '--config=dockerfiles/code_checks/.flake8' ]
-        exclude: '^notebooks/'
-
-  - repo: https://github.com/hhatto/autopep8
-    rev: v2.3.1
-    hooks:
-      - id: autopep8  # Perform pep8 auto-formatting
-        args: [ --max-line-length=120, --in-place ]
-        exclude: '^notebooks/'
+      - id: black
+        args: [--line-length=120, --preview]
+        exclude: '^(notebooks/|\.venv/)'
 
   - repo: https://github.com/milin/giticket
-    rev: v1.4
+    rev: v1.5
     hooks:
       - id: giticket  # Prepend the commit message with the JIRA ticket
         args: [ '--regex=(?:(?:feature|bugfix|support|hotfix)/)?(OND[0-9]{3}-[0-9]{1,5})[_-][\w-]+',
@@ -101,6 +83,6 @@ repos:
                 '--mode=regex_match' ]
 
   - repo: https://github.com/asottile/add-trailing-comma
-    rev: v3.1.0
+    rev: v4.0.0
     hooks:
       - id: add-trailing-comma

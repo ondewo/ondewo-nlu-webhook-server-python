@@ -5,35 +5,141 @@
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
-      "envFile": "${workspaceFolder}/envs/local.env",
-      "name": "Debug ondewo_nlu_webhook_server",
-      "program": "${workspaceFolder}/ondewo_nlu_webhook_server/server/__main__.py",
-      "request": "launch",
-      "type": "debugpy"
-    },
-    {
-      "console": "integratedTerminal",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      },
-      "envFile": "${workspaceFolder}/envs/local.env",
-      "name": "Start ondewo_nlu_webhook_server",
-      "program": "${workspaceFolder}/ondewo_nlu_webhook_server/server/__main__.py",
+      "justMyCode": false,
+      "name": "Python: Current File",
+      "program": "${file}",
       "request": "launch",
       "type": "debugpy"
     },
     {
       "args": [
-        "tests"
+        "${file}",
+        "-v",
+        "--tb=short",
+        "-s"
       ],
       "console": "integratedTerminal",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       },
-      "envFile": "${workspaceFolder}/envs/local.env",
+      "justMyCode": false,
       "module": "pytest",
-      "name": "Run Pytests",
+      "name": "Python: Pytest - Current File",
       "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "--tb=short"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "module": "pytest",
+      "name": "Python: Pytest - All Tests",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "unit",
+        "--tb=short"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "module": "pytest",
+      "name": "Python: Pytest - Unit Tests",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "integration",
+        "--tb=short"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "module": "pytest",
+      "name": "Python: Pytest - Integration Tests",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "args": [
+        "tests",
+        "-v",
+        "-m",
+        "e2e",
+        "--tb=short"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "module": "pytest",
+      "name": "Python: Pytest - E2E Tests",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "console": "integratedTerminal",
+      "env": {
+        "ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HOST": "0.0.0.0",
+        "ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_PORT": "59001",
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false,
+      "module": "ondewo_nlu_webhook_server.server.__main__",
+      "name": "Python: Webhook Server (Local)",
+      "request": "launch",
+      "type": "debugpy"
+    },
+    {
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "justMyCode": false,
+      "name": "Python: Attach to Docker Container",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        }
+      ],
+      "request": "attach",
+      "type": "debugpy"
+    },
+    {
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "name": "Python: Remote Attach",
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "."
+        }
+      ],
+      "request": "attach",
       "type": "debugpy"
     }
   ],

@@ -18,18 +18,17 @@ class LanguageCodeError(InvalidArgumentException):
     """
 
     def __init__(self, reason: Any, *args: Any) -> None:
-        super(LanguageCodeError, self).__init__(reason, *args)
+        super().__init__(reason, *args)
         self.reason = reason
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}: {self.reason}'
+        return f"{self.__class__.__name__}: {self.reason}"
 
     def __str__(self) -> str:
-        return f'{self.__class__.__name__}: {self.reason}'
+        return f"{self.__class__.__name__}: {self.reason}"
 
 
 class NotALanguageError(LanguageCodeError):
     """
     Error: a value was provided which should be of type LanguageCode but is not.
     """
-    pass

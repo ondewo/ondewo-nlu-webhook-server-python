@@ -19,16 +19,16 @@ tests if the webhook server is active
     checks if class instances were assigned correctly and whether the session IDs (request.session & response.session)
     match
 """
-import os
+
 from json import JSONDecodeError
+import os
 from typing import (
     Any,
-    Dict,
 )
 
+from ondewo.logging.logger import logger_console as log
 import pytest
 import requests
-from ondewo.logging.logger import logger_console as log
 
 from ondewo_nlu_webhook_server.server.base_models import (
     WebhookRequest,
@@ -50,8 +50,8 @@ class TestWebhookServerE2e:
 
     def test_server_connection(
         self,
-        webhook_server_for_testing: None,
-        headers: Dict[str, str],
+        webhook_server_for_testing: None,  # pylint: disable=unused-argument
+        headers: dict[str, str],
     ) -> None:
         """
         Sends a http GET message to the server_url base directory to see if it is online
@@ -64,7 +64,7 @@ class TestWebhookServerE2e:
 
         # tests connection
         try:
-            reply = requests.get(self.server_url, verify=False, headers=headers)
+            reply = requests.get(self.server_url, verify=False, headers=headers, timeout=30)
             assert reply.status_code == 200
         except requests.exceptions.ConnectionError:
             pytest.fail("Could not connect to server.")
@@ -73,8 +73,8 @@ class TestWebhookServerE2e:
     def test_custom_code(
         self,
         server_function: str,
-        webhook_server_for_testing: None,
-        headers: Dict[str, str],
+        webhook_server_for_testing: None,  # pylint: disable=unused-argument
+        headers: dict[str, str],
     ) -> None:
         """
         Tests the custom code implementations slot_filling() and response_refinement() by sending a request without a
@@ -110,7 +110,7 @@ class TestWebhookServerE2e:
         request: WebhookRequest,
         server_url: str,
         server_function: str,
-        headers: Dict[str, str],
+        headers: dict[str, str],
     ) -> WebhookResponse:
         """
         Sends a request to the webhook server, validates the response structure, and returns it.
@@ -134,11 +134,11 @@ class TestWebhookServerE2e:
         """
         # Construct the full request URL
         request_url: str = f"{server_url}/{server_function}"
-        log.debug(f"Request URL: {request_url}")
+        log.debug("Request URL: %s", request_url)
 
         # Serialize the request data
-        request_payload: Dict[str, Any] = request.model_dump()
-        log.debug(f"Request payload: {request_payload}")
+        request_payload: dict[str, Any] = request.model_dump()
+        log.debug("Request payload: %s", request_payload)
 
         response_obj: requests.Response
         try:
@@ -148,27 +148,28 @@ class TestWebhookServerE2e:
                 headers=headers,
                 json=request_payload,
                 verify=False,
+                timeout=30,
             )
             response_obj.raise_for_status()
         except requests.RequestException as e:
-            log.error(f"Error while sending request: {e}")
+            log.error("Error while sending request: %s", e)
             raise ConnectionError(f"Failed to connect to {request_url}: {e}") from e
 
         assert response_obj
-        response_dict: Dict[str, Any]
+        response_dict: dict[str, Any]
         # Parse the response as JSON
         try:
             response_dict = response_obj.json()
-            log.debug(f"Response JSON: {response_dict}")
+            log.debug("Response JSON: %s", response_dict)
         except JSONDecodeError as e:
-            log.error(f"Invalid JSON response: {response_obj.text}")
+            log.error("Invalid JSON response: %s", response_obj.text)
             raise ValueError(f"Invalid JSON response from server: {e}") from e
 
         # Validate the response structure
         try:
             WebhookResponse.model_validate(response_dict)
         except Exception as e:
-            log.error(f"Response validation failed: {e}")
+            log.error("Response validation failed: %s", e)
             raise ValueError(f"Response validation failed: {e}") from e
 
         # Return the response as a WebhookResponse instance

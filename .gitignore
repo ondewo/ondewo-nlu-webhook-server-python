@@ -160,3 +160,29 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Ruff cache
+.ruff_cache/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Cursor
+.cursor/
+
+# Coverage reports
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+
+# UV lock file (optional - comment out if you want to commit it)
+# uv.lock
+
+# Large binary files
+bin/act

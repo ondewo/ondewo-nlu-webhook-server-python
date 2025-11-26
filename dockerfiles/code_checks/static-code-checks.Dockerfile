@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.13-slim as code_checks
+FROM python:3.14-slim as code_checks
 
 # Install some useful apps in the image.
 RUN apt update && apt upgrade -y && apt install -y \
@@ -29,12 +29,14 @@ RUN apt update && apt upgrade -y && apt install -y \
     && apt autoclean  \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY requirements-static-code-checks.txt .
-COPY dockerfiles/code_checks/.flake8 .
-COPY dockerfiles/code_checks/mypy.ini .
+# Copy uv binary from official uv Docker image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+COPY pyproject.toml .
 COPY dockerfiles/code_checks/Makefile .
 
-RUN pip install -r requirements-static-code-checks.txt
+# Install dev dependencies using uv
+RUN uv pip install --system -e ".[dev]"
 
 RUN mkdir code_to_test
 

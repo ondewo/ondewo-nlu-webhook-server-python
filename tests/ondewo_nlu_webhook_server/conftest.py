@@ -15,7 +15,6 @@
 from base64 import b64encode
 from typing import (
     Any,
-    Dict,
 )
 
 import pytest
@@ -25,21 +24,22 @@ from ondewo_nlu_webhook_server.server.base_models import WebhookRequest
 
 
 @pytest.fixture
-def valid_request_data() -> Dict[str, Any]:
+def valid_request_data() -> dict[str, Any]:
     """Fixture for valid request data."""
     webhook_request: WebhookRequest = WebhookRequest.create_sample_request()
-    return webhook_request.model_dump()  # type:ignore # serialize to json
+    return webhook_request.model_dump()  # type: ignore # serialize to json
 
 
 @pytest.fixture
-def headers() -> Dict[str, str]:
+def headers() -> dict[str, str]:
+    """Fixture for HTTP Basic Auth headers."""
     # Retrieve username and password from WebhookGlobals
     username = WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
     password = WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
 
     # Create the HTTP Basic Auth header
     credentials = f"{username}:{password}"
-    encoded_credentials = b64encode(credentials.encode('utf-8')).decode('utf-8')
+    encoded_credentials = b64encode(credentials.encode("utf-8")).decode("utf-8")
 
     # Return headers including the Basic Auth header
     return {

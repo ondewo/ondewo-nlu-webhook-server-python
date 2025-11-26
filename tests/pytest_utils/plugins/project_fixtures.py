@@ -14,11 +14,11 @@
 
 import os
 
-import pytest
 from _pytest.config import Config
+import pytest
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def tests_subdir(pytestconfig: Config) -> str:
     path, ext = os.path.splitext(pytestconfig.option.file_or_dir[0])
     if ext:

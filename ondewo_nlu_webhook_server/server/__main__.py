@@ -12,22 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-import os
-import sys
 from multiprocessing import cpu_count
+import os
 from signal import (
     SIGINT,
     SIGTERM,
     signal,
 )
+import sys
 from types import FrameType
-from typing import (
-    List,
-    Optional,
-    Tuple,
-)
 
-import uvicorn
 from fastapi import (
     FastAPI,
 )
@@ -36,6 +30,7 @@ from ondewo.logging.logger import logger_console as log
 from starlette.middleware.cors import (
     CORSMiddleware,  # type: ignore
 )
+import uvicorn
 
 from ondewo_nlu_webhook_server.server.server import router as server_router
 from ondewo_nlu_webhook_server.version import __version__
@@ -59,7 +54,7 @@ app.include_router(server_router)
 sys.path.append(os.path.abspath(os.path.join(__file__, "../..")))
 
 
-@Timer(logger=log.info, log_arguments=True, message='__main__.py: parse_arguments: Elapsed time: {:.5f}')
+@Timer(logger=log.info, log_arguments=True, message="__main__.py: parse_arguments: Elapsed time: {:.5f}")
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments with default fallbacks."""
     parser = argparse.ArgumentParser(description="ONDEWO NLU Webhook Server")
@@ -80,8 +75,8 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-@Timer(logger=log.info, log_arguments=True, message='__main__.py: graceful_shutdown: Elapsed time: {:.5f}')
-def graceful_shutdown(signal_received: int, frame: Optional[FrameType]) -> None:  # type:ignore
+@Timer(logger=log.info, log_arguments=True, message="__main__.py: graceful_shutdown: Elapsed time: {:.5f}")
+def graceful_shutdown(signal_received: int, frame: FrameType | None) -> None:  # type: ignore
     """
     Handle shutdown signals.
 
@@ -93,7 +88,7 @@ def graceful_shutdown(signal_received: int, frame: Optional[FrameType]) -> None:
     sys.exit(0)
 
 
-@Timer(logger=log.info, log_arguments=True, message='__main__.py: main: Elapsed time: {:.5f}')
+@Timer(logger=log.info, log_arguments=True, message="__main__.py: main: Elapsed time: {:.5f}")
 def main() -> None:
     # region Welcome message
     # Display startup information
@@ -115,7 +110,7 @@ def main() -> None:
             "------------------------ ENVIRONMENT ---------------------\n"
             "----------------------------------------------------------\n"
         )
-        env_items: List[Tuple[str, str]] = sorted(os.environ.items(), key=lambda environment: environment[0])
+        env_items: list[tuple[str, str]] = sorted(os.environ.items(), key=lambda environment: environment[0])
         for key, value in env_items:
             env_string += f"{key}={value}\n"
         env_string += (
@@ -143,7 +138,7 @@ def main() -> None:
 
     # region Log environment variables
     try:
-        env_items: List[Tuple[str, str]] = sorted(os.environ.items(), key=lambda x: x[0])  # type:ignore
+        env_items: list[tuple[str, str]] = sorted(os.environ.items(), key=lambda x: x[0])  # type: ignore
         log.debug("Environment Variables:\n" + "\n".join(f"{k}={v}" for k, v in env_items))
     except Exception as e:
         log.error(f"Failed to log environment variables: {e}")

@@ -33,13 +33,11 @@ Intents where either slot_filling() or response_refinement() are used need to be
     for the custom code to be called. Either the displayName or the intent ID need to be in the list.
 
 """
+
 from enum import Enum
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
-    Tuple,
 )
 
 from ondewo.logging.decorators import Timer
@@ -71,12 +69,13 @@ class IntentMapping(Enum):
 
 # region CASE 1: Slot Filling
 
-@Timer(logger=log.debug, log_arguments=True, message='slot_filling. Elapsed time: {:.5f}')
+
+@Timer(logger=log.debug, log_arguments=True, message="slot_filling. Elapsed time: {:.5f}")
 async def slot_filling(
     active_intent: Intent,
-    active_contexts: Optional[List[Context]] = None,
-    headers: Optional[Dict[str, str]] = None,
-) -> Optional[List[Context]]:
+    active_contexts: list[Context] | None = None,
+    headers: dict[str, str] | None = None,
+) -> list[Context] | None:
     """
     slot_filling() is called when the request was posted to [server-IP]/slot_filling and
         the detected intent is found in the <active_intents> list
@@ -126,13 +125,11 @@ async def slot_filling(
         )
     )
     """
-    if active_intent.displayName in {IntentMapping.DEFAULT_WELCOME_INTENT.value}:  # TODO: Example Intent, use yours
-        log.debug(f"slot_filling: Intent handler called for intent display name '{active_intent.displayName}'")
-
-    elif active_intent.displayName in {IntentMapping.I_EXAMPLE_THANKS_GOOD.value}:  # TODO: Example Intent, use yours
-        log.debug(f"slot_filling: Intent handler called for intent display name '{active_intent.displayName}'")
-
-    elif active_intent.displayName in {IntentMapping.I_EXAMPLE_MY_DATE.value}:  # TODO: Example Intent, use yours
+    if (
+        active_intent.displayName in {IntentMapping.DEFAULT_WELCOME_INTENT.value}
+        or active_intent.displayName in {IntentMapping.I_EXAMPLE_THANKS_GOOD.value}
+        or active_intent.displayName in {IntentMapping.I_EXAMPLE_MY_DATE.value}
+    ):  # TODO: Example Intent, use yours
         log.debug(f"slot_filling: Intent handler called for intent display name '{active_intent.displayName}'")
 
     else:
@@ -145,14 +142,15 @@ async def slot_filling(
 
 # region CASE 2: Response Refinement
 
-@Timer(logger=log.debug, log_arguments=True, message='response_refinement. Elapsed time: {:.5f}')
+
+@Timer(logger=log.debug, log_arguments=True, message="response_refinement. Elapsed time: {:.5f}")
 async def response_refinement(
-    headers: Dict[str, str],
+    headers: dict[str, str],
     active_intent: Intent,
-    fulfillment_messages: List[Dict[str, Any]],
-    active_contexts: Optional[List[Context]],
-    parameters: Optional[Dict[str, Any]],
-) -> Tuple[List[Dict[str, Any]], Optional[List[Context]]]:
+    fulfillment_messages: list[dict[str, Any]],
+    active_contexts: list[Context] | None,
+    parameters: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], list[Context] | None]:
     """
     response_refinement() is called when the request was posted to [server-IP]/response_refinement and
         the detected intent is found in the <active_intents> list
@@ -197,10 +195,9 @@ async def response_refinement(
         "response text override by webhook server"
     )
     """
-    if active_intent.displayName in {IntentMapping.DEFAULT_WELCOME_INTENT.value}:
-        log.debug(f"response_refinement: Intent handler called for intent display name '{active_intent.displayName}'")
-
-    elif active_intent.displayName in {IntentMapping.I_EXAMPLE_THANKS_GOOD.value}:  # TODO: Example Intent, use yours
+    if active_intent.displayName in {IntentMapping.DEFAULT_WELCOME_INTENT.value} or active_intent.displayName in {
+        IntentMapping.I_EXAMPLE_THANKS_GOOD.value,
+    }:
         log.debug(f"response_refinement: Intent handler called for intent display name '{active_intent.displayName}'")
 
     elif active_intent.displayName in {IntentMapping.I_EXAMPLE_WEBREQUEST.value}:  # TODO: Example Intent, use yours
@@ -218,5 +215,6 @@ async def response_refinement(
         log.debug(f"response_refinement: No handler for intent display name '{active_intent.displayName}'")
 
     return fulfillment_messages, active_contexts
+
 
 # endregion CASE 2: Response Refinement

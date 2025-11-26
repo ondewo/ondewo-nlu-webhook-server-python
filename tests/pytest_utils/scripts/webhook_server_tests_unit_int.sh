@@ -36,7 +36,7 @@ args="$args --reruns-delay 5"
 # args="$args --debug"
 # args="$args --dist=loadscope"
 # args="$args --dist=worksteal"
-# args="$args -d --tx popen//python=python3.13"
+# args="$args -d --tx popen//python=python3.14"
 # args="$args -n 1"
 
 # specific pytest options

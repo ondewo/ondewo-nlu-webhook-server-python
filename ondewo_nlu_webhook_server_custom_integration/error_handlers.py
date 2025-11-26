@@ -68,5 +68,5 @@ def handle_internal_error(exception: Exception) -> CustomHttpException:
             raise handle_internal_error(caught_exception)
         ```
     """
-    log.error(f"Internal error: {exception}")
+    log.error("Internal error: %s", exception)
     return CustomHttpException(status_code=500, detail="An internal error occurred.")

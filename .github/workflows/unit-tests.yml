@@ -1,34 +1,30 @@
-# Workflow: Build and Test ondewo-nlu-webhook-server-python
+# Workflow: Tests and Code Style Checks
 #
-# This workflow automates the process of building, linting, and testing the
-# ondewo-nlu-webhook-server-python project. It runs pre-commit hooks, performs
-# linting using ruff, and executes unit, integration, and end-to-end tests.
+# This workflow runs code style checks (ruff and black), unit tests, and e2e tests
+# on every push to the repository.
 #
 # For more information, see:
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Build and test ondewo-nlu-webhook-server-python
+name: Tests and Code Style
 
 on:
-  push:
-    branches: [ "master" ] # Trigger workflow on pushes to the master branch
-  pull_request:
-    branches: [ "master" ] # Trigger workflow on pull requests targeting the master branch
+  push: # Trigger workflow on pushes to any branch
+  pull_request: # Trigger workflow on pull requests to any branch
 
 permissions:
   contents: read # Allow read access to repository contents
 
 jobs:
-
-  # Job: Pre-commit hooks validation
-  job-pre-commit-checks:
+  # Job: Code style checks
+  code-style:
     runs-on: ubuntu-latest
     steps:
       # Step 1: Check out the code
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Step 2: Set up Python environment for pre-commit hooks
+      # Step 2: Set up Python environment
       - name: Set up Python 3.14
         uses: actions/setup-python@v3
         with:
@@ -45,13 +41,24 @@ jobs:
         run: |
           uv pip install -e ".[dev]"
 
-      # Step 5: Run pre-commit hooks
-      - name: Run pre-commit hooks
-        uses: pre-commit/action@v3.0.1
+      # Step 5: Run ruff linting check
+      - name: Run ruff linting check
+        run: |
+          ruff check .
 
-  # Job: Build and test unit and integration tests
-  job-build-and-test-unit-int:
-    needs: job-pre-commit-checks
+      # Step 6: Run ruff format check
+      - name: Run ruff format check
+        run: |
+          ruff format --check .
+
+      # Step 7: Run black format check
+      - name: Run black format check
+        run: |
+          black --check .
+
+  # Job: Run unit and integration tests
+  unit-tests:
+    needs: code-style
     runs-on: ubuntu-latest
     services:
       docker: # Enable Docker service for running containerized tests
@@ -93,9 +100,9 @@ jobs:
           # Execute the unit and integration test script
           tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh tests/ondewo_nlu_webhook_server
 
-  # Job: Build and test unit and integration tests
-  job-build-and-test-e2e:
-    needs: job-build-and-test-unit-int
+  # Job: Run end-to-end tests
+  e2e-tests:
+    needs: unit-tests
     runs-on: ubuntu-latest
     services:
       docker: # Enable Docker service for running containerized tests

@@ -26,10 +26,11 @@ while pytest_runtest_teardown apparently only runs for tests which have been run
 
 From https://nvbn.github.io/2017/02/02/pytest-leaking/
 """
-import os
+
 from collections import namedtuple
 from itertools import groupby
 from operator import attrgetter
+import os
 from typing import Any
 
 from _pytest.nodes import Item
@@ -39,7 +40,7 @@ LEAK_LIMIT = 10 * 1024 * 1024  # report memory leaks larger than 10MB
 
 _proc = Process(os.getpid())
 
-ConsumedRamLogEntry = namedtuple('ConsumedRamLogEntry', ('nodeid', 'on', 'consumed_ram'))
+ConsumedRamLogEntry = namedtuple("ConsumedRamLogEntry", ("nodeid", "on", "consumed_ram"))
 consumed_ram_log = []
 
 
@@ -53,26 +54,26 @@ def get_consumed_ram() -> Any:
 
 
 def pytest_runtest_setup(item: Item) -> None:
-    add_consumed_ram_entry(item, on='START')
+    add_consumed_ram_entry(item, on="START")
 
 
 def pytest_runtest_teardown(item: Item) -> None:
-    add_consumed_ram_entry(item, on='END')
+    add_consumed_ram_entry(item, on="END")
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:
     grouped = groupby(consumed_ram_log, lambda entry: entry.nodeid)  # type: ignore
 
-    leaked_message = ''
-    leaked_failure_message = ''
+    leaked_message = ""
+    leaked_failure_message = ""
     for nodeid, entries in grouped:
         try:
             start_entry, end_entry = entries
             leaked = end_entry.consumed_ram - start_entry.consumed_ram
             if leaked > LEAK_LIMIT:
-                leaked_message = leaked_message + f'LEAKED {(leaked / 1024 / 1024):.1f}MB in {nodeid}\n'
+                leaked_message = leaked_message + f"LEAKED {(leaked / 1024 / 1024):.1f}MB in {nodeid}\n"
         except ValueError:
-            leaked_failure_message = leaked_failure_message + f'{nodeid}\n'
+            leaked_failure_message = leaked_failure_message + f"{nodeid}\n"
 
     if leaked_failure_message:
         terminalreporter.write_sep(sep="=", title="failure in leak calculations")
@@ -83,10 +84,9 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
         terminalreporter.write(leaked_message)
 
     if consumed_ram_log:
-        max_mem_use = sorted(consumed_ram_log, key=attrgetter('consumed_ram'))[-1]
+        max_mem_use = sorted(consumed_ram_log, key=attrgetter("consumed_ram"))[-1]
         if max_mem_use:
             terminalreporter.write_sep(sep="=", title="maximum memory usage")
             terminalreporter.write(
-                f'{max_mem_use.consumed_ram / 1024 / 1024:.1f}MB'
-                f' on {max_mem_use.on} of {max_mem_use.nodeid}\n',
+                f"{max_mem_use.consumed_ram / 1024 / 1024:.1f}MB on {max_mem_use.on} of {max_mem_use.nodeid}\n",
             )

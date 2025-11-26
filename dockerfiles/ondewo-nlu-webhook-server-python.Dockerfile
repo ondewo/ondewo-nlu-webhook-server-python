@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.13-slim AS base
+FROM python:3.14-slim AS base
 
 # Get GRPCurl
 COPY --from=fullstorydev/grpcurl:latest /bin/grpcurl /usr/local/bin/
@@ -87,10 +87,12 @@ FROM base AS uncythonized
 
 ARG CACHEBUST=1
 
-# Install requirements
-COPY ./requirements.txt .
-COPY ./requirements-ondewo-clients.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Copy uv binary from official uv Docker image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install requirements using uv
+COPY ./pyproject.toml .
+RUN uv pip install --system -e .
 
 # Copy source code
 COPY ./ondewo_nlu_webhook_server ./ondewo_nlu_webhook_server
@@ -117,22 +119,24 @@ HEALTHCHECK --interval=1m --timeout=5s --retries=3 \
 ########################################################################################
 FROM base AS cythonized
 
-# Install build dependencies
-RUN pip install --upgrade pip && pip install cython setuptools wheel
+# Copy uv binary from official uv Docker image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install build dependencies using uv
+RUN uv pip install --system cython setuptools wheel
 
 # Copy source code for compilation
 COPY ./ondewo_nlu_webhook_server ./ondewo_nlu_webhook_server
 COPY ./ondewo_nlu_webhook_server_custom_integration ./ondewo_nlu_webhook_server_custom_integration
-COPY ./requirements.txt .
-COPY ./requirements-ondewo-clients.txt .
+COPY ./pyproject.toml .
 COPY ./RELEASE.md .
 COPY ./README.md .
 COPY ./LICENSE.md .
 COPY ./setup.cfg .
 COPY ./setup.py  .
 
-# Install dependencies for building
-RUN pip install -r requirements.txt
+# Install dependencies for building using uv
+RUN uv pip install --system -e .
 
 # Compile Python files to shared objects (.so)
 RUN python setup.py build_ext --inplace
