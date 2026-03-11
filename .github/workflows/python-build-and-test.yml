@@ -25,6 +25,9 @@ jobs:
   # Job: Pre-commit hooks validation
   job-pre-commit-checks:
     runs-on: ubuntu-latest
+    # In act, branch filters in `on:` are ignored, so enforce them here to prevent
+    # conflicts when running alongside unit-tests.yml on non-master branches.
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
     steps:
       # Step 1: Check out the code
       - name: Checkout repository
@@ -64,6 +67,7 @@ jobs:
   job-build-and-test-unit-int:
     needs: job-pre-commit-checks
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
     services:
       docker: # Enable Docker service for running containerized tests
         image: docker:dind
@@ -138,6 +142,7 @@ jobs:
           name: unit-int-coverage-xml
           path: coverage/
           retention-days: 30
+        continue-on-error: true
 
       # Step 11: Upload JUnit XML as artifact
       - name: Upload JUnit XML artifact
@@ -147,6 +152,7 @@ jobs:
           name: unit-int-junit-xml
           path: junit/
           retention-days: 30
+        continue-on-error: true
 
       # Step 12: Publish JUnit test results as GitHub Check
       - name: Publish unit/integration test results
@@ -155,34 +161,13 @@ jobs:
         with:
           files: junit/pytest_unit-*.xml
           check_name: Unit/Integration Test Results
-
-      # Step 13: Code coverage summary
-      - name: Code coverage summary
-        if: always()
-        uses: irongut/CodeCoverageSummary@v1.3.0
-        with:
-          filename: coverage/coverage-*.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: false
-          indicators: true
-          output: both
-          thresholds: '50 75'
-
-      # Step 14: Add coverage PR comment
-      - name: Add coverage PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
-        with:
-          recreate: true
-          path: code-coverage-results.md
+        continue-on-error: true
 
   # Job: Build and test unit and integration tests
   job-build-and-test-e2e:
     needs: job-pre-commit-checks
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
     services:
       docker: # Enable Docker service for running containerized tests
         image: docker:dind
@@ -240,6 +225,9 @@ jobs:
             echo "Warning: envs/local.env not found, continuing without it"
           fi
           set +a
+          # Override container/image names to prevent conflicts in parallel workflow runs
+          export ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_CONTAINER_NAME="ondewo-nlu-wh-${{ github.run_id }}-${{ github.job }}"
+          export ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME="ondewo-nlu-webhook-server-test:${{ github.run_id }}-${{ github.job }}"
           export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
           # Execute the e2e test script
           tests/pytest_utils/scripts/webhook_server_tests_e2e.sh tests/e2e
@@ -257,6 +245,7 @@ jobs:
           name: e2e-coverage-xml
           path: coverage/
           retention-days: 30
+        continue-on-error: true
 
       # Step 11: Upload JUnit XML as artifact
       - name: Upload JUnit XML artifact
@@ -266,6 +255,7 @@ jobs:
           name: e2e-junit-xml
           path: junit/
           retention-days: 30
+        continue-on-error: true
 
       # Step 12: Publish JUnit test results as GitHub Check
       - name: Publish e2e test results
@@ -274,13 +264,53 @@ jobs:
         with:
           files: junit/pytest_e2e-*.xml
           check_name: E2E Test Results
+        continue-on-error: true
 
-      # Step 13: Code coverage summary
+  # Job: Publish combined coverage report as PR comment
+  job-coverage-report:
+    needs: [job-build-and-test-unit-int, job-build-and-test-e2e]
+    runs-on: ubuntu-latest
+    if: always() && (github.ref == 'refs/heads/master' || github.event_name == 'pull_request')
+
+    steps:
+      # Step 1: Download unit/integration test coverage artifact
+      - name: Download unit/integration coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-int-coverage-xml
+          path: coverage/unit-int/
+        continue-on-error: true
+
+      # Step 2: Download e2e test coverage artifact
+      - name: Download e2e coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-coverage-xml
+          path: coverage/e2e/
+        continue-on-error: true
+
+      # Step 3: Merge coverage XML files into a single directory
+      - name: Merge coverage XML files
+        id: merge-coverage
+        run: |
+          mkdir -p coverage/combined
+          cp coverage/unit-int/*.xml coverage/combined/ 2>/dev/null || true
+          cp coverage/e2e/*.xml coverage/combined/ 2>/dev/null || true
+          if ls coverage/combined/*.xml 2>/dev/null | grep -q .; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "Coverage XML files found:"
+            ls -la coverage/combined/
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No coverage XML files found"
+          fi
+
+      # Step 4: Generate combined code coverage summary
       - name: Code coverage summary
-        if: always()
+        if: steps.merge-coverage.outputs.found == 'true'
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          filename: coverage/coverage-*.xml
+          filename: coverage/combined/*.xml
           badge: true
           fail_below_min: false
           format: markdown
@@ -289,11 +319,13 @@ jobs:
           indicators: true
           output: both
           thresholds: '50 75'
+        continue-on-error: true
 
-      # Step 14: Add coverage PR comment
-      - name: Add coverage PR comment
+      # Step 5: Add combined coverage PR comment
+      - name: Add combined coverage PR comment
         uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
+        if: steps.merge-coverage.outputs.found == 'true' && github.event_name == 'pull_request'
         with:
           recreate: true
           path: code-coverage-results.md
+          header: combined-coverage-report
