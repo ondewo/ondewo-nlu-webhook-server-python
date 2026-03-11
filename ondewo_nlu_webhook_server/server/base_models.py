@@ -239,8 +239,8 @@ class IntentMessage(BaseModel):
     platform: str | None = None
     is_prompt: bool | None = None
 
-    @classmethod
     @field_validator("platform")
+    @classmethod
     def validate_platform(cls, value: str) -> str:
         if value and value not in INTENT_MESSAGE_PLATFORM_ENUM_SET:
             raise ValueError(

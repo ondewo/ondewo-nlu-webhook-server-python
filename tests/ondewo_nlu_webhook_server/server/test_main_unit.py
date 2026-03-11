@@ -68,3 +68,69 @@ class TestMain:
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code == 1
+
+    def test_main_env_print_exception_is_handled(self) -> None:
+        """Cover lines 128-129: exception in the first env-variable print block."""
+        original_sorted = sorted
+
+        call_count = 0
+
+        def sorted_raising_on_first_call(iterable, **kwargs):  # type: ignore[no-untyped-def]
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise Exception("env sort error")
+            return original_sorted(iterable, **kwargs)
+
+        with (
+            patch.object(sys, "argv", ["__main__.py"]),
+            patch("builtins.sorted", side_effect=sorted_raising_on_first_call),
+            patch("ondewo_nlu_webhook_server.server.__main__.uvicorn.run") as mock_run,
+            patch("ondewo_nlu_webhook_server.server.__main__.signal"),
+        ):
+            main()
+            mock_run.assert_called_once()
+
+    def test_main_env_log_exception_is_handled(self) -> None:
+        """Cover lines 148-149: exception in the second env-variable log block."""
+        original_sorted = sorted
+
+        call_count = 0
+
+        def sorted_raising_on_second_call(iterable, **kwargs):  # type: ignore[no-untyped-def]
+            nonlocal call_count
+            call_count += 1
+            if call_count == 2:
+                raise Exception("env log sort error")
+            return original_sorted(iterable, **kwargs)
+
+        with (
+            patch.object(sys, "argv", ["__main__.py"]),
+            patch("builtins.sorted", side_effect=sorted_raising_on_second_call),
+            patch("ondewo_nlu_webhook_server.server.__main__.uvicorn.run") as mock_run,
+            patch("ondewo_nlu_webhook_server.server.__main__.signal"),
+        ):
+            main()
+            mock_run.assert_called_once()
+
+    def test_parse_arguments_long_host_flag(self) -> None:
+        """Test that the long --host flag works in parse_arguments."""
+        with patch.object(sys, "argv", ["__main__.py", "--host", "192.168.1.1"]):
+            args = parse_arguments()
+            assert args.host == "192.168.1.1"
+
+    def test_main_workers_from_environment(self) -> None:
+        """Test that the number of workers is read from the environment variable."""
+        with (
+            patch.object(sys, "argv", ["__main__.py"]),
+            patch("ondewo_nlu_webhook_server.server.__main__.uvicorn.run") as mock_run,
+            patch("ondewo_nlu_webhook_server.server.__main__.signal"),
+            patch.dict(
+                "os.environ",
+                {"ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_NR_OF_WORKERS": "4"},
+            ),
+        ):
+            main()
+            mock_run.assert_called_once()
+            call_kwargs = mock_run.call_args
+            assert call_kwargs.kwargs["workers"] == 4

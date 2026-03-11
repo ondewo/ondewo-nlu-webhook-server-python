@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from ondewo_nlu_webhook_server.custom_exceptions import NotALanguageError
@@ -111,6 +113,14 @@ class TestLanguageProperties:
         except ModuleNotFoundError:
             pytest.skip("language_data package not installed")
 
+    @pytest.mark.unit
+    def test_get_long_name_mocked_success(self) -> None:
+        mock_language = MagicMock()
+        mock_language.language_name.return_value = "English"
+        with patch("ondewo_nlu_webhook_server.language_code.Language.get", return_value=mock_language):
+            result = LanguageCode.en_US.get_long_name()
+            assert result == "english"  # .lower() is applied
+
     def test_get_locale_multi(self) -> None:
         result = LanguageCode.multi.get_locale()
         assert result == LanguageCode.en_US.get_value()
@@ -129,3 +139,110 @@ class TestLanguageProperties:
 
     def test_get_value(self) -> None:
         assert LanguageCode.en_US.get_value() == "en-US"
+
+    @pytest.mark.unit
+    def test_get_language_str_exception_propagates(self) -> None:
+        with (
+            patch(
+                "ondewo_nlu_webhook_server.language_code.Language.get",
+                side_effect=AssertionError("mocked failure"),
+            ),
+            pytest.raises(AssertionError),
+        ):
+            LanguageCode.en_US.get_language_str()
+
+    @pytest.mark.unit
+    def test_get_language_exception_propagates(self) -> None:
+        with (
+            patch(
+                "ondewo_nlu_webhook_server.language_code.Language.get",
+                side_effect=AssertionError("mocked failure"),
+            ),
+            pytest.raises(AssertionError),
+        ):
+            LanguageCode.en_US.get_language()
+
+    @pytest.mark.unit
+    def test_get_long_name_exception_propagates(self) -> None:
+        with (
+            patch(
+                "ondewo_nlu_webhook_server.language_code.Language.get",
+                side_effect=AssertionError("mocked failure"),
+            ),
+            pytest.raises(AssertionError),
+        ):
+            LanguageCode.en_US.get_long_name()
+
+    @pytest.mark.unit
+    def test_get_locales_german(self) -> None:
+        result = LanguageCode.get_locales("de")
+        assert isinstance(result, set)
+        assert LanguageCode.de_DE in result
+
+    @pytest.mark.unit
+    def test_get_locales_french(self) -> None:
+        result = LanguageCode.get_locales("fr")
+        assert isinstance(result, set)
+        assert LanguageCode.fr_FR in result
+
+    @pytest.mark.unit
+    def test_get_locales_unknown_returns_default(self) -> None:
+        result = LanguageCode.get_locales("nonexistent_language_xyz")
+        assert isinstance(result, set)
+        # defaults to {"en_US"}
+        assert LanguageCode.en_US in result
+
+    @pytest.mark.unit
+    def test_get_locale_utf_english(self) -> None:
+        result = LanguageCode.en_US.get_locale_utf()
+        assert result == "en_US.utf8"
+
+    @pytest.mark.unit
+    def test_get_locale_utf_german(self) -> None:
+        result = LanguageCode.de_DE.get_locale_utf()
+        assert result == "de_DE.utf8"
+
+    @pytest.mark.unit
+    def test_get_locale_utf_unknown_returns_default(self) -> None:
+        # multi maps to en_US.utf8 per LOCALES_DICT
+        result = LanguageCode.multi.get_locale_utf()
+        assert result == "en_US.utf8"
+
+
+class TestFromListExtended:
+    @pytest.mark.unit
+    def test_from_list_multiple_languages_sorted(self) -> None:
+        result = LanguageCode.from_list(["fr-FR", "en-US", "de-DE"])
+        assert result == [LanguageCode.de_DE, LanguageCode.en_US, LanguageCode.fr_FR]
+
+    @pytest.mark.unit
+    def test_from_list_multiple_languages_unsorted(self) -> None:
+        result = LanguageCode.from_list(["fr-FR", "en-US", "de-DE"], sort_values=False)
+        assert result == [LanguageCode.fr_FR, LanguageCode.en_US, LanguageCode.de_DE]
+
+    @pytest.mark.unit
+    def test_from_list_single_language(self) -> None:
+        result = LanguageCode.from_list(["es-ES"])
+        assert result == [LanguageCode.es_ES]
+
+
+class TestIntersectSetsExtended:
+    @pytest.mark.unit
+    def test_intersect_sets_multi_language(self) -> None:
+        s1 = {LanguageCode.en_US, LanguageCode.de_DE, LanguageCode.fr_FR}
+        s2 = {LanguageCode.de_DE, LanguageCode.fr_FR, LanguageCode.es_ES}
+        result = LanguageCode.intersect_sets(s1, s2)
+        assert result == {LanguageCode.de_DE, LanguageCode.fr_FR}
+
+    @pytest.mark.unit
+    def test_intersect_sets_no_overlap(self) -> None:
+        s1 = {LanguageCode.en_US}
+        s2 = {LanguageCode.de_DE}
+        result = LanguageCode.intersect_sets(s1, s2)
+        assert result == set()
+
+    @pytest.mark.unit
+    def test_intersect_sets_identical(self) -> None:
+        s = {LanguageCode.en_US, LanguageCode.de_DE}
+        result = LanguageCode.intersect_sets(s, s)
+        assert result == s

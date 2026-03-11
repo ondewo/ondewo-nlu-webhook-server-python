@@ -148,9 +148,6 @@ async def call_case(
         except ValidationError:
             raise HTTPException(status_code=400, detail="Invalid request format")
 
-    if not WebhookRequest.model_validate(webhook_request):
-        raise HTTPException(status_code=400, detail="Invalid WebhookRequest format")
-
     webhook_request.headers = dict(request.headers)
 
     webhook_response: WebhookResponse = WebhookResponse(
@@ -173,9 +170,6 @@ async def call_case(
         webhook_response=webhook_response,
         call_case=call_case,
     )
-
-    if not WebhookResponse.model_validate(webhook_response):
-        raise HTTPException(status_code=500, detail="Invalid response format")
 
     logger.debug(
         f"webhook_response.model_dump_json(): {json.dumps(webhook_response.model_dump(), indent=2)}",

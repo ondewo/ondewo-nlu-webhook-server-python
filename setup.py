@@ -25,19 +25,19 @@ def make_extensions(base_dir: str) -> list[Extension]:
     __main__.py files must remain as plain Python source because
     'python -m package' cannot execute compiled .so entry points.
     """
-    extensions = []
+    extensions: list[Extension] = []
     for filepath in sorted(glob.glob(f"{base_dir}/**/*.py", recursive=True)):
         if filepath.endswith("__main__.py"):
             continue
         # Convert file path to dotted module name: a/b/c.py -> a.b.c
-        module_name = filepath.replace(os.sep, ".").removesuffix(".py")
+        module_name: str = filepath.replace(os.sep, ".").removesuffix(".py")
         extensions.append(Extension(module_name, [filepath]))
     return extensions
 
 
 # Cython extensions configuration
 # Most project metadata is now in pyproject.toml
-extensions = cythonize(
+extensions: list[Extension] = cythonize(
     make_extensions("ondewo_nlu_webhook_server") + make_extensions("ondewo_nlu_webhook_server_custom_integration"),
     language_level=3,
     nthreads=os.cpu_count(),

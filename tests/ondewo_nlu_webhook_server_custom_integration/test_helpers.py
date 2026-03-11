@@ -31,6 +31,16 @@ class TestCheckIfTextResponseExist:
         msgs = [{"text": {"other": "value"}}]
         assert check_if_text_response_exist(msgs) is False
 
+    def test_message_with_text_key_but_empty_text_dict(self) -> None:
+        # Covers branch where message_with_text is set but "text" not in message_with_text["text"]
+        msgs = [{"text": {}}]
+        assert check_if_text_response_exist(msgs) is False
+
+    def test_non_text_message_before_text_message(self) -> None:
+        # Covers branch 58->57: "text" not in message for first item, loop continues
+        msgs = [{"image": {"url": "http://example.com"}}, {"text": {"text": ["hello"]}}]
+        assert check_if_text_response_exist(msgs) is True
+
 
 class TestGetIndexOfTextEntry:
     def test_finds_text_entry(self) -> None:
@@ -122,6 +132,41 @@ class TestReplacePlaceholderInText:
         result = replace_placeholder_in_text(msgs, "value", intent, None)
         assert result == msgs
 
+    def test_webrequest_intent_parameter1(self) -> None:
+        mock_data = {
+            "my-product-1": [{"category": "my-product-category item", "price": "10.99€"}],
+            "my-product-2": [{"category": "my-product-category item", "price": "20.50€"}],
+        }
+        msgs = [{"text": {"text": ["The price is <PRICE>"]}}]
+        intent = Intent(name="id", displayName="i.example_webrequest")
+        parameters = {"MyEntityType": ["parameter1"]}
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.utils.helpers.extract_price",
+            return_value=mock_data,
+        ):
+            result = replace_placeholder_in_text(msgs, "<PRICE>", intent, parameters)
+
+        # price_match[:-2] strips the last 2 chars ("€" counted as 1 char in this string)
+        assert result[0]["text"]["text"][0] == "The price is 10.9"
+
+    def test_webrequest_intent_other_parameter(self) -> None:
+        mock_data = {
+            "my-product-1": [{"category": "my-product-category item", "price": "10.99€"}],
+            "my-product-2": [{"category": "my-product-category item", "price": "20.50€"}],
+        }
+        msgs = [{"text": {"text": ["The price is <PRICE>"]}}]
+        intent = Intent(name="id", displayName="i.example_webrequest")
+        parameters = {"MyEntityType": ["other_type"]}
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.utils.helpers.extract_price",
+            return_value=mock_data,
+        ):
+            result = replace_placeholder_in_text(msgs, "<PRICE>", intent, parameters)
+
+        assert result[0]["text"]["text"][0] == "The price is 20.5"
+
 
 class TestExtractPrice:
     def test_extract_price_parses_table(self) -> None:
@@ -152,5 +197,36 @@ class TestExtractPrice:
             result = extract_price("https://example.com")
             assert "price_list" in result
             assert len(result["price_list"]) == 2
+            assert result["price_list"][0]["category"] == "Category A"
+            assert result["price_list"][0]["price"] == "10.99€"
+
+    def test_extract_price_skips_rows_with_fewer_than_2_cells(self) -> None:
+        # Covers branch 242->240: if len(cells) >= 2 is False, row is skipped
+        html = """
+        <html><body>
+        <div class="table-box">
+            <table class="table">
+                <tr class="tablerow">
+                    <td>Only one cell</td>
+                </tr>
+                <tr class="tablerow">
+                    <td>Category A</td>
+                    <td>10.99€</td>
+                </tr>
+            </table>
+        </div>
+        </body></html>
+        """
+        mock_response = MagicMock()
+        mock_response.text = html
+        mock_response.raise_for_status = MagicMock()
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.utils.helpers.get",
+            return_value=mock_response,
+        ):
+            result = extract_price("https://example.com")
+            assert "price_list" in result
+            assert len(result["price_list"]) == 1  # only the row with 2+ cells
             assert result["price_list"][0]["category"] == "Category A"
             assert result["price_list"][0]["price"] == "10.99€"

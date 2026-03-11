@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from typing import (
     Any,
 )
 
+import pytest
 from fastapi.testclient import TestClient
 
+from ondewo_nlu_webhook_server.globals import WebhookGlobals
 from ondewo_nlu_webhook_server.server.__main__ import app
 from ondewo_nlu_webhook_server.server.base_models import WebhookResponse
+from ondewo_nlu_webhook_server.server.server import verify_token
 
 
 client = TestClient(app)
@@ -100,3 +104,41 @@ def test_custom_code_execution(valid_request_data: dict[str, Any], headers: dict
 
 
 # Ensure you include other edge cases and scenarios as needed.
+
+
+@pytest.mark.unit
+def test_verify_token_valid() -> None:
+    """Test verify_token returns the token when it matches the configured bearer token."""
+    valid_token: str = WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER
+    result: str = verify_token(token=valid_token)
+    assert result == valid_token
+
+
+@pytest.mark.unit
+def test_string_json_body(valid_request_data: dict[str, Any], headers: dict[str, str]) -> None:
+    """Test request where the JSON body is a double-encoded string (isinstance(request_json, str) branch)."""
+    double_encoded: str = json.dumps(json.dumps(valid_request_data))
+    merged_headers: dict[str, str] = {**headers, "Content-Type": "application/json"}
+    response = client.post(
+        url="/slot_filling",
+        headers=merged_headers,
+        content=double_encoded,
+    )
+    assert response.status_code == 200
+    response_json: dict[str, Any] = response.json()
+    assert "fulfillmentMessages" in response_json
+
+
+@pytest.mark.unit
+def test_invalid_string_json_body(headers: dict[str, str]) -> None:
+    """Test request where the JSON body is a double-encoded string that decodes to an invalid WebhookRequest."""
+    invalid_inner: dict[str, Any] = {"queryResult": {"intent": {}}}
+    double_encoded: str = json.dumps(json.dumps(invalid_inner))
+    merged_headers: dict[str, str] = {**headers, "Content-Type": "application/json"}
+    response = client.post(
+        url="/slot_filling",
+        headers=merged_headers,
+        content=double_encoded,
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid request format"}

@@ -54,7 +54,7 @@ def check_if_text_response_exist(fulfillment_messages: list[dict[str, Any]]) -> 
     """
     if len(fulfillment_messages) >= 1 and any("text" in message for message in fulfillment_messages):
         message_with_text: dict[str, Any] | None = None
-        for message in fulfillment_messages:
+        for message in fulfillment_messages:  # pragma: no branch
             if "text" in message:
                 message_with_text = message
                 break

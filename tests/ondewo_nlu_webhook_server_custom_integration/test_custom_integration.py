@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from ondewo_nlu_webhook_server.server.base_models import Context, Intent
@@ -93,4 +95,70 @@ class TestResponseRefinement:
             active_contexts=[],
             parameters=None,
         )
+        assert result_msgs == msgs
+
+    @pytest.mark.asyncio
+    async def test_webrequest_intent_calls_replace_placeholder(self) -> None:
+        intent = Intent(name="id", displayName=IntentMapping.I_EXAMPLE_WEBREQUEST.value)
+        msgs = [{"text": {"text": ["Value: <EXAMPLE_PLACEHOLDER>"]}}]
+        params = {"key": "value"}
+        refined_msgs = [{"text": {"text": ["Value: replaced"]}}]
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.custom_integration.replace_placeholder_in_text",
+            return_value=refined_msgs,
+        ) as mock_replace:
+            result_msgs, result_ctx = await response_refinement(
+                headers={},
+                active_intent=intent,
+                fulfillment_messages=msgs,
+                active_contexts=None,
+                parameters=params,
+            )
+
+        mock_replace.assert_called_once_with(
+            fulfillment_messages=msgs,
+            replace_text="<EXAMPLE_PLACEHOLDER>",
+            active_intent=intent,
+            parameters=params,
+        )
+        assert result_msgs == refined_msgs
+        assert result_ctx is None
+
+    @pytest.mark.asyncio
+    async def test_default_exit_intent_goes_to_else_branch(self) -> None:
+        intent = Intent(name="id", displayName=IntentMapping.DEFAULT_EXIT_INTENT.value)
+        msgs = [{"text": {"text": ["Goodbye"]}}]
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.custom_integration.replace_placeholder_in_text",
+        ) as mock_replace:
+            result_msgs, result_ctx = await response_refinement(
+                headers={},
+                active_intent=intent,
+                fulfillment_messages=msgs,
+                active_contexts=None,
+                parameters=None,
+            )
+
+        mock_replace.assert_not_called()
+        assert result_msgs == msgs
+
+    @pytest.mark.asyncio
+    async def test_default_reset_intent_goes_to_else_branch(self) -> None:
+        intent = Intent(name="id", displayName=IntentMapping.DEFAULT_RESET_INTENT.value)
+        msgs = [{"text": {"text": ["Reset"]}}]
+
+        with patch(
+            "ondewo_nlu_webhook_server_custom_integration.custom_integration.replace_placeholder_in_text",
+        ) as mock_replace:
+            result_msgs, result_ctx = await response_refinement(
+                headers={},
+                active_intent=intent,
+                fulfillment_messages=msgs,
+                active_contexts=None,
+                parameters=None,
+            )
+
+        mock_replace.assert_not_called()
         assert result_msgs == msgs
