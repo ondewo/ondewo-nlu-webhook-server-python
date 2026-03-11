@@ -158,11 +158,10 @@ jobs:
       # Step 12: Publish JUnit test results as GitHub Check
       - name: Publish unit test results
         if: always()
-        uses: EnricoMi/publish-test-results-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: junit/pytest_unit-*.xml
           check_name: Unit Test Results
-          comment_title: Unit Test Results
 
       # Step 13: Upload coverage to Codecov
       - name: Upload unit coverage to Codecov
@@ -266,11 +265,10 @@ jobs:
       # Step 12: Publish JUnit test results as GitHub Check
       - name: Publish e2e test results
         if: always()
-        uses: EnricoMi/publish-test-results-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: junit/pytest_e2e-*.xml
           check_name: E2E Test Results
-          comment_title: E2E Test Results
 
       # Step 13: Upload coverage to Codecov
       - name: Upload e2e coverage to Codecov
