@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ondewo_nlu_webhook_server.server.base_models import Context, Intent, Parameter
+from ondewo_nlu_webhook_server.server.base_models import Context, Intent
 from ondewo_nlu_webhook_server_custom_integration.utils.helpers import (
     _append_message_to_fulfillment,
     add_text_to_fulfillment,
@@ -86,7 +86,7 @@ class TestCreateNewContextName:
             ),
         ]
         result = create_new_context_name(contexts, "new_ctx")
-        assert "projects/my-project/agent/sessions/my-session/active_contexts/new_ctx" == result
+        assert result == "projects/my-project/agent/sessions/my-session/active_contexts/new_ctx"
 
     def test_with_project_and_session_id(self) -> None:
         result = create_new_context_name([], "new_ctx", project_id="proj1", session_id="sess1")

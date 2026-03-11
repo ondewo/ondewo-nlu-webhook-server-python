@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from ondewo_nlu_webhook_server.server.__main__ import app
 from ondewo_nlu_webhook_server.version import __version__
 
+
 client = TestClient(app)
 
 
@@ -32,19 +33,21 @@ class TestHealthAndIndex:
 
 class TestVerifyToken:
     def test_verify_token_invalid(self) -> None:
-        from ondewo_nlu_webhook_server.server.server import verify_token
-        from fastapi import HTTPException
         import pytest
+        from fastapi import HTTPException
+
+        from ondewo_nlu_webhook_server.server.server import verify_token
 
         with pytest.raises(HTTPException) as exc_info:
             verify_token(token="invalid_token")
         assert exc_info.value.status_code == 401
 
     def test_verify_credentials_invalid(self) -> None:
-        from ondewo_nlu_webhook_server.server.server import verify_credentials
+        import pytest
         from fastapi import HTTPException
         from fastapi.security import HTTPBasicCredentials
-        import pytest
+
+        from ondewo_nlu_webhook_server.server.server import verify_credentials
 
         creds = HTTPBasicCredentials(username="wrong", password="wrong")
         with pytest.raises(HTTPException) as exc_info:

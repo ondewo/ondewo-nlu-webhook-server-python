@@ -1,4 +1,3 @@
-import importlib
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -17,17 +16,20 @@ def _mock_nlu_client(monkeypatch: pytest.MonkeyPatch) -> None:
 def _get_auth_module(mock_client: MagicMock) -> object:
     """Import auth module with mocked NluClient."""
     mock_client_class = MagicMock(return_value=mock_client)
-    with patch.dict(
-        "os.environ",
-        {
-            "ONDEWO_NLU_CAI_HOST": "localhost",
-            "ONDEWO_NLU_CAI_PORT": "50055",
-            "ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN": "token",
-            "ONDEWO_NLU_CAI_USER_NAME": "user",
-            "ONDEWO_NLU_CAI_USER_PASS": "pass",
-            "ONDEWO_NLU_CAI_GRPC_CERT": "",
-        },
-    ), patch("ondewo.nlu.client.Client", mock_client_class):
+    with (
+        patch.dict(
+            "os.environ",
+            {
+                "ONDEWO_NLU_CAI_HOST": "localhost",
+                "ONDEWO_NLU_CAI_PORT": "50055",
+                "ONDEWO_NLU_CAI_HTTP_BASIC_AUTH_TOKEN": "token",
+                "ONDEWO_NLU_CAI_USER_NAME": "user",
+                "ONDEWO_NLU_CAI_USER_PASS": "pass",
+                "ONDEWO_NLU_CAI_GRPC_CERT": "",
+            },
+        ),
+        patch("ondewo.nlu.client.Client", mock_client_class),
+    ):
         if "ondewo_nlu_webhook_server_custom_integration.auth" in sys.modules:
             del sys.modules["ondewo_nlu_webhook_server_custom_integration.auth"]
         import ondewo_nlu_webhook_server_custom_integration.auth as auth_module

@@ -38,8 +38,7 @@ def make_extensions(base_dir: str) -> list[Extension]:
 # Cython extensions configuration
 # Most project metadata is now in pyproject.toml
 extensions = cythonize(
-    make_extensions("ondewo_nlu_webhook_server")
-    + make_extensions("ondewo_nlu_webhook_server_custom_integration"),
+    make_extensions("ondewo_nlu_webhook_server") + make_extensions("ondewo_nlu_webhook_server_custom_integration"),
     language_level=3,
     nthreads=os.cpu_count(),
 )

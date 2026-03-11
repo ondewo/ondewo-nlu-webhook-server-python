@@ -3,13 +3,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from ondewo_nlu_webhook_server.server.base_models import (
-    Context,
     EventInput,
-    Intent,
     IntentMessage,
     IntentMessagePlatformEnum,
     IntentMessageText,
-    Parameter,
     WebhookRequest,
     WebhookResponse,
 )

@@ -1,6 +1,6 @@
 import pytest
 
-from ondewo_nlu_webhook_server.server.base_models import Context, Intent, Parameter
+from ondewo_nlu_webhook_server.server.base_models import Context, Intent
 from ondewo_nlu_webhook_server_custom_integration.custom_integration import (
     IntentMapping,
     response_refinement,
