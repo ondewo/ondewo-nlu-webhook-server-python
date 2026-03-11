@@ -17,6 +17,8 @@ on:
 
 permissions:
   contents: read # Allow read access to repository contents
+  checks: write # Allow writing check results (JUnit test reports)
+  pull-requests: write # Allow posting coverage comments on PRs
 
 jobs:
 
@@ -102,7 +104,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 7: Run unit and integration tests
+      # Step 7: Create output directories for coverage and JUnit reports
+      - name: Create coverage and junit directories
+        run: mkdir -p coverage junit
+
+      # Step 8: Run unit and integration tests
       - name: Run unit and integration tests
         env:
           DOCKER_HOST: tcp://docker:2375
@@ -118,6 +124,49 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
           # Execute the unit and integration test script
           tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh tests/ondewo_nlu_webhook_server
+
+      # Step 9: Print coverage summary to workflow logs
+      - name: Coverage report (console)
+        if: always()
+        run: coverage report --skip-empty || true
+
+      # Step 10: Upload coverage XML as artifact
+      - name: Upload coverage XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-int-coverage-xml
+          path: coverage/
+          retention-days: 30
+
+      # Step 11: Upload JUnit XML as artifact
+      - name: Upload JUnit XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-int-junit-xml
+          path: junit/
+          retention-days: 30
+
+      # Step 12: Publish JUnit test results as GitHub Check
+      - name: Publish unit/integration test results
+        if: always()
+        uses: EnricoMi/publish-test-results-action@v2
+        with:
+          files: junit/pytest_unit-*.xml
+          check_name: Unit/Integration Test Results
+          comment_title: Unit/Integration Test Results
+
+      # Step 13: Upload coverage to Codecov
+      - name: Upload unit/integration coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/coverage-*.xml
+          flags: unit
+          name: unit-int-tests
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   # Job: Build and test unit and integration tests
   job-build-and-test-e2e:
@@ -163,7 +212,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 7: Run end-to-end tests
+      # Step 7: Create output directories for coverage and JUnit reports
+      - name: Create coverage and junit directories
+        run: mkdir -p coverage junit
+
+      # Step 8: Run end-to-end tests
       - name: Run end-to-end tests
         env:
           DOCKER_HOST: tcp://docker:2375
@@ -179,3 +232,46 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
           # Execute the e2e test script
           tests/pytest_utils/scripts/webhook_server_tests_e2e.sh tests/e2e
+
+      # Step 9: Print coverage summary to workflow logs
+      - name: Coverage report (console)
+        if: always()
+        run: coverage report --skip-empty || true
+
+      # Step 10: Upload coverage XML as artifact
+      - name: Upload coverage XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-coverage-xml
+          path: coverage/
+          retention-days: 30
+
+      # Step 11: Upload JUnit XML as artifact
+      - name: Upload JUnit XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-junit-xml
+          path: junit/
+          retention-days: 30
+
+      # Step 12: Publish JUnit test results as GitHub Check
+      - name: Publish e2e test results
+        if: always()
+        uses: EnricoMi/publish-test-results-action@v2
+        with:
+          files: junit/pytest_e2e-*.xml
+          check_name: E2E Test Results
+          comment_title: E2E Test Results
+
+      # Step 13: Upload coverage to Codecov
+      - name: Upload e2e coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/coverage-*.xml
+          flags: e2e
+          name: e2e-tests
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
