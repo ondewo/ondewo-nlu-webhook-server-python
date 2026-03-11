@@ -158,16 +158,28 @@ jobs:
           files: junit/pytest_unit-*.xml
           check_name: Unit Test Results
 
-      # Step 13: Upload coverage to Codecov
-      - name: Upload unit coverage to Codecov
+      # Step 13: Code coverage summary
+      - name: Code coverage summary
         if: always()
-        uses: codecov/codecov-action@v5
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          files: coverage/coverage-*.xml
-          flags: unit
-          name: unit-tests
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+          filename: coverage/coverage-*.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '50 75'
+
+      # Step 14: Add coverage PR comment
+      - name: Add coverage PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
 
   # Job: Run end-to-end tests
   e2e-tests:
@@ -265,13 +277,25 @@ jobs:
           files: junit/pytest_e2e-*.xml
           check_name: E2E Test Results
 
-      # Step 13: Upload coverage to Codecov
-      - name: Upload e2e coverage to Codecov
+      # Step 13: Code coverage summary
+      - name: Code coverage summary
         if: always()
-        uses: codecov/codecov-action@v5
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          files: coverage/coverage-*.xml
-          flags: e2e
-          name: e2e-tests
-          fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
+          filename: coverage/coverage-*.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '50 75'
+
+      # Step 14: Add coverage PR comment
+      - name: Add coverage PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
