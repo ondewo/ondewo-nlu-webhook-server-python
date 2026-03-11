@@ -1,6 +1,6 @@
 # Workflow: Tests and Code Style Checks
 #
-# This workflow runs code style checks (ruff and black), unit tests, and e2e tests
+# This workflow runs code style checks (ruff), unit tests, and e2e tests
 # on every push to the repository.
 #
 # For more information, see:
@@ -61,11 +61,6 @@ jobs:
       - name: Run ruff format check
         run: |
           ruff format --check .
-
-      # Step 8: Run black format check
-      - name: Run black format check
-        run: |
-          black --check .
 
   # Job: Run unit and integration tests
   unit-tests:
