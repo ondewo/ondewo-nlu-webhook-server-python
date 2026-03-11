@@ -169,7 +169,7 @@ jobs:
 
   # Job: Build and test unit and integration tests
   job-build-and-test-e2e:
-    needs: job-build-and-test-unit-int
+    needs: job-pre-commit-checks
     runs-on: ubuntu-latest
     services:
       docker: # Enable Docker service for running containerized tests
