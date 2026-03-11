@@ -20,9 +20,9 @@ This script checks that all required tools and configurations are properly set u
 for development on the ONDEWO NLU Webhook Server Python project.
 """
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 
 def check_command(command: str, version_arg: str = "--version") -> tuple[bool, str]:

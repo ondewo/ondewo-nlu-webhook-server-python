@@ -19,7 +19,7 @@ SHELL=/bin/sh
 MAKEFLAGS += --silent
 CONFIGS_PATH:=$(shell pwd)/configs
 
-RELEASE_VERSION=$(shell cat ondewo_nlu_webhook_server/version.py | grep "__version__" | sed "s:__version__ = '::"  | sed "s:'::")
+RELEASE_VERSION=$(shell grep -oP "(?<=__version__: str = ')[^']+" ondewo_nlu_webhook_server/version.py)
 
 PYPI_USERNAME?=ENTER_HERE_YOUR_PYPI_USERNAME
 PYPI_PASSWORD?=ENTER_HERE_YOUR_PYPI_PASSWORD
@@ -185,7 +185,7 @@ curl_docker_socket:
 
 # for local use
 build: PUSH_NAME=${PUSH_NAME_ROOT}:develop
-build: clear_package_data init_submodules checkout_defined_submodule_versions build_server_image_uncythonized
+build: clear_package_data init_submodules checkout_defined_submodule_versions build_server_image_uncythonized build_server_image_release
 
 build_server_image: build_server_image_uncythonized ## Build the image
 

@@ -13,60 +13,29 @@
 # limitations under the License.
 
 from fastapi import HTTPException
-from ondewo.logging.logger import logger_console as log  # type: ignore
+from loguru import logger
 
 
 class CustomHttpException(HTTPException):
-    """
-    Custom exception class to handle HTTP exceptions with specific details.
-
-    This class extends FastAPI's `HTTPException` to enable customized error handling
-    in API responses. It allows specifying both the status code and a detail message
-    that describes the error.
+    """Custom exception class to handle HTTP exceptions with specific details.
 
     Attributes:
-        status_code (int): The HTTP status code to be returned in the response.
-        detail (str): A message providing details about the error.
+        status_code: The HTTP status code to be returned in the response.
+        detail: A message providing details about the error.
     """
 
-    def __init__(self, status_code: int, detail: str):
-        """
-        Initializes a new instance of CustomHttpException.
-
-        Args:
-            status_code (int): The HTTP status code for the exception (e.g., 404 for Not Found).
-            detail (str): A detailed message describing the error that occurred.
-
-        Example:
-            ```python
-            raise CustomHttpException(status_code=404, detail="Resource not found.")
-            ```
-        """
+    def __init__(self, status_code: int, detail: str) -> None:
         super().__init__(status_code=status_code, detail=detail)
 
 
 def handle_internal_error(exception: Exception) -> CustomHttpException:
-    """
-    Handles internal server errors by logging the error and raising a custom exception.
-
-    This function logs the details of the exception and returns a `CustomHttpException`
-    with a 500 status code and a generic internal error message. It centralizes error
-    handling in the application to ensure consistent responses for unhandled exceptions.
+    """Handles internal server errors by logging the error and raising a custom exception.
 
     Args:
-        exception (Exception): The caught exception that triggered the internal error handling.
+        exception: The caught exception that triggered the internal error handling.
 
     Returns:
-        CustomHttpException: An instance of `CustomHttpException` with a status code of 500
-        and a detail message indicating an internal error.
-
-    Example:
-        ```python
-        try:
-            # Code that may raise an exception
-        except Exception as caught_exception:
-            raise handle_internal_error(caught_exception)
-        ```
+        An instance of CustomHttpException with a status code of 500.
     """
-    log.error("Internal error: %s", exception)
+    logger.error(f"Internal error: {exception}")
     return CustomHttpException(status_code=500, detail="An internal error occurred.")

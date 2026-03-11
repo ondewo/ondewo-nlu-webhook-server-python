@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import time
 from copy import deepcopy
 
-from ondewo.logging.decorators import Timer
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 
 from ondewo_nlu_webhook_server.constants import (
     RESPONSE_REFINEMENT_CASE,
@@ -31,19 +31,12 @@ from ondewo_nlu_webhook_server_custom_integration.custom_integration import (
 )
 
 
-@Timer(
-    logger=log.info,
-    log_arguments=False,
-    message="relay.py: call_custom_code: Elapsed time: {}",
-)
 async def call_custom_code(
     webhook_request: WebhookRequest,
     webhook_response: WebhookResponse,
     call_case: str,
 ) -> WebhookResponse:
-    """
-    calls functions defined in <CUSTOM_CODE.py> for the defined <call_case>s
-    tests is implemented through a specific "ONDEWO_test_webhook_server" entry in the header.keys()
+    """Calls functions defined in custom_integration.py for the defined call_cases.
 
     Args:
         webhook_request: request sent by ondewo-cai
@@ -53,38 +46,42 @@ async def call_custom_code(
     Returns:
         response object
     """
+    start_time: float = time.perf_counter()
     try:
         if call_case == SLOT_FILLING_CASE:
-            log.debug("relay.py: call_custom_code: slot_filling: START:")
-            # get parameters and active_contexts from _custom_code and relay them to the response object
+            logger.debug("relay.py: call_custom_code: slot_filling: START:")
             webhook_response.outputContexts = await slot_filling(
                 active_intent=webhook_request.queryResult.intent,
                 active_contexts=webhook_request.queryResult.outputContexts,
                 headers=webhook_request.headers,
             )
-            log.debug(
+            logger.debug(
                 "relay.py: call_custom_code: slot_filling: END:"
                 f"webhook_response.outputContexts={webhook_response.outputContexts}",
             )
 
         elif call_case == RESPONSE_REFINEMENT_CASE:
-            log.debug("relay.py: call_custom_code: response_refinement: START:")
-            webhook_response.fulfillmentMessages, webhook_response.outputContexts = await response_refinement(
-                headers=webhook_request.headers,
+            logger.debug("relay.py: call_custom_code: response_refinement: START:")
+            webhook_response.fulfillmentMessages, webhook_response.outputContexts = await response_refinement(  # type: ignore[assignment]
+                headers=webhook_request.headers or {},
                 active_intent=webhook_request.queryResult.intent,
-                fulfillment_messages=webhook_request.queryResult.fulfillmentMessages,
+                fulfillment_messages=webhook_request.queryResult.fulfillmentMessages,  # type: ignore[arg-type]
                 active_contexts=deepcopy(webhook_request.queryResult.outputContexts),
                 parameters=webhook_request.queryResult.parameters,
             )
-            log.debug(
+            logger.debug(
                 "relay.py: call_custom_code: response_refinement: END: "
                 f"fulfillmentMessages={webhook_response} \n"
                 f"outputContexts={webhook_response.outputContexts}",
             )
 
-        log.debug("relay.py: call_custom_code: response_refinement: END: ")
+        logger.debug("relay.py: call_custom_code: END")
+        end_time: float = time.perf_counter()
+        logger.info(f"relay.py: call_custom_code: Elapsed time: {end_time - start_time:.5f}")
         return webhook_response
 
     except Exception as e:
-        log.error(f"Error in call_custom_code: {e}")
+        end_time_err: float = time.perf_counter()
+        logger.error(f"Error in call_custom_code: {e}")
+        logger.info(f"relay.py: call_custom_code: Elapsed time: {end_time_err - start_time:.5f}")
         return webhook_response

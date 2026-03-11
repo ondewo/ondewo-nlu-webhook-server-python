@@ -12,30 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from multiprocessing import cpu_count
 import os
+import sys
+import time
+from multiprocessing import cpu_count
 from signal import (
     SIGINT,
     SIGTERM,
     signal,
 )
-import sys
 from types import FrameType
 
+import uvicorn
 from fastapi import (
     FastAPI,
 )
-from ondewo.logging.decorators import Timer
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 from starlette.middleware.cors import (
     CORSMiddleware,  # type: ignore
 )
-import uvicorn
 
 from ondewo_nlu_webhook_server.server.server import router as server_router
 from ondewo_nlu_webhook_server.version import __version__
 
-app = FastAPI()
+
+app: FastAPI = FastAPI()
 
 # region: CORS middleware: used for local debugging to prevent CORS errors
 app.add_middleware(
@@ -54,10 +55,10 @@ app.include_router(server_router)
 sys.path.append(os.path.abspath(os.path.join(__file__, "../..")))
 
 
-@Timer(logger=log.info, log_arguments=True, message="__main__.py: parse_arguments: Elapsed time: {:.5f}")
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments with default fallbacks."""
-    parser = argparse.ArgumentParser(description="ONDEWO NLU Webhook Server")
+    start_time: float = time.perf_counter()
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="ONDEWO NLU Webhook Server")
     parser.add_argument(
         "-p",
         "--port",
@@ -72,39 +73,43 @@ def parse_arguments() -> argparse.Namespace:
         default=os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0"),
     )
 
-    return parser.parse_args()
+    result: argparse.Namespace = parser.parse_args()
+    end_time: float = time.perf_counter()
+    logger.info(f"__main__.py: parse_arguments: Elapsed time: {end_time - start_time:.5f}")
+    return result
 
 
-@Timer(logger=log.info, log_arguments=True, message="__main__.py: graceful_shutdown: Elapsed time: {:.5f}")
-def graceful_shutdown(signal_received: int, frame: FrameType | None) -> None:  # type: ignore
-    """
-    Handle shutdown signals.
+def graceful_shutdown(signal_received: int, frame: FrameType | None) -> None:
+    """Handle shutdown signals.
 
     Args:
-        signal_received (int): The signal received (e.g., SIGINT, SIGTERM).
-        frame (Optional[FrameType]): The current stack frame (can be None).
+        signal_received: The signal received (e.g., SIGINT, SIGTERM).
+        frame: The current stack frame (can be None).
     """
-    log.info(f"Shutdown signal {signal_received} received. Cleaning up ...")
+    start_time: float = time.perf_counter()
+    logger.info(f"Shutdown signal {signal_received} received. Cleaning up ...")
+    end_time: float = time.perf_counter()
+    logger.info(f"__main__.py: graceful_shutdown: Elapsed time: {end_time - start_time:.5f}")
     sys.exit(0)
 
 
-@Timer(logger=log.info, log_arguments=True, message="__main__.py: main: Elapsed time: {:.5f}")
 def main() -> None:
+    start_time: float = time.perf_counter()
+
     # region Welcome message
-    # Display startup information
-    info_string = (
+    info_string: str = (
         "\n\n\n Welcome to ... \n\n"
         "-----------------------------------------------------------------\n"
         "--- ONDEWO NLU Webhook Server Python ---\n"
         f"--- Version: {__version__} ---\n"
         "-----------------------------------------------------------------\n"
     )
-    log.debug(info_string)
+    logger.debug(info_string)
     # endregion Welcome message
 
     # region: Print environment variables
     try:
-        env_string = (
+        env_string: str = (
             "\n"
             "----------------------------------------------------------\n"
             "------------------------ ENVIRONMENT ---------------------\n"
@@ -118,30 +123,30 @@ def main() -> None:
             "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
             "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n"
         )
-        log.debug(f"ENVIRONMENT: Environment variables:\n{env_string}")
+        logger.debug(f"ENVIRONMENT: Environment variables:\n{env_string}")
 
     except Exception as e:
-        log.error(f"ENVIRONMENT: Could not print environment variables! Exception: {e}")
+        logger.error(f"ENVIRONMENT: Could not print environment variables! Exception: {e}")
     # endregion: Print environment variables
 
     # region Parse command-line arguments
     try:
-        args = parse_arguments()
+        args: argparse.Namespace | object = parse_arguments()
     except SystemExit:
-        # If no arguments are provided, use the default values
+
         class DefaultArgs:
-            host = str(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0"))
-            port = int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", "59001"))
+            host: str = str(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0"))
+            port: int = int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", "59001"))
 
         args = DefaultArgs()
     # endregion Parse command-line arguments
 
     # region Log environment variables
     try:
-        env_items: list[tuple[str, str]] = sorted(os.environ.items(), key=lambda x: x[0])  # type: ignore
-        log.debug("Environment Variables:\n" + "\n".join(f"{k}={v}" for k, v in env_items))
+        env_items_log: list[tuple[str, str]] = sorted(os.environ.items(), key=lambda x: x[0])
+        logger.debug("Environment Variables:\n" + "\n".join(f"{k}={v}" for k, v in env_items_log))
     except Exception as e:
-        log.error(f"Failed to log environment variables: {e}")
+        logger.error(f"Failed to log environment variables: {e}")
     # endregion Log environment variables
 
     # Handle shutdown signals
@@ -151,19 +156,22 @@ def main() -> None:
     # Number of workers based on environment variable. If not set then set workers based on CPU cores
     workers: int = int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_NR_OF_WORKERS", cpu_count() * 2 + 1))
 
+    end_time: float = time.perf_counter()
+    logger.info(f"__main__.py: main: Elapsed time: {end_time - start_time:.5f}")
+
     # Start the server
     try:
         uvicorn.run(
             app="ondewo_nlu_webhook_server.server.__main__:app",
-            host=args.host,
-            port=args.port,
-            reload=False,  # Disable reload in production
-            log_level="info",  # Reduce log verbosity
-            workers=workers,  # Use multiple workers for better concurrency
-            access_log=False,  # Disable access logs for speed (enable if needed)
+            host=args.host,  # type: ignore[union-attr]
+            port=args.port,  # type: ignore[union-attr]
+            reload=False,
+            log_level="info",
+            workers=workers,
+            access_log=False,
         )
     except Exception as e:
-        log.error(f"Server failed to start: {e}")
+        logger.error(f"Server failed to start: {e}")
         sys.exit(1)
 
 

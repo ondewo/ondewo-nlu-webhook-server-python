@@ -19,7 +19,7 @@ Definitions of json dataclass objects used for communication from & to the webho
 from __future__ import annotations
 
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from typing import (
     Any,
 )
@@ -184,7 +184,7 @@ class IntentMessageAudio(BaseModel):
     accessibility_text: str | None = None
 
 
-class IntentMessagePlatformEnum(str, Enum):
+class IntentMessagePlatformEnum(StrEnum):
     PLATFORM_UNSPECIFIED = "PLATFORM_UNSPECIFIED"
     FACEBOOK = "FACEBOOK"
     SLACK = "SLACK"

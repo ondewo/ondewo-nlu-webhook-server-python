@@ -27,14 +27,15 @@ while pytest_runtest_teardown apparently only runs for tests which have been run
 From https://nvbn.github.io/2017/02/02/pytest-leaking/
 """
 
+import os
 from collections import namedtuple
 from itertools import groupby
 from operator import attrgetter
-import os
 from typing import Any
 
 from _pytest.nodes import Item
 from psutil import Process
+
 
 LEAK_LIMIT = 10 * 1024 * 1024  # report memory leaks larger than 10MB
 

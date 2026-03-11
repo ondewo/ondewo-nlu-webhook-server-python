@@ -18,8 +18,8 @@ from typing import (
     Union,
 )
 
-from fastapi import HTTPException
 import httpx
+from fastapi import HTTPException
 
 
 async def make_http_request(

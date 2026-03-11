@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from base64 import b64encode
-from collections.abc import Generator
 import os
 import time
+from base64 import b64encode
+from collections.abc import Generator
 from typing import (
     Any,
 )
 
+import pytest
 from docker import (
     APIClient,
     from_env,
@@ -30,8 +31,8 @@ from docker.errors import (
 )
 from docker.models.containers import Container
 from docker.models.images import Image
-from ondewo.logging.logger import logger_console as log
-import pytest
+from loguru import logger
+
 
 # Container and image tag constants
 IMAGE_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME", "")
@@ -39,59 +40,51 @@ CONTAINER_NAME: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_CONTAINER_NAME
 
 
 class CustomDockerClient(APIClient):
-    """
-    Wrapper to get the health check status of a given Docker container with a 'nice' function.
-    """
+    """Wrapper to get the health check status of a given Docker container."""
 
     def __init__(
         self,
         container: Container,
         *args: Any,
         **kwargs: Any,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.container_id = container.id
+        self.container_id: str | None = container.id
 
     def get_health_status(self) -> str:
-        """
-        Read the health status of the container.
-        """
+        """Read the health status of the container."""
         return str(self.inspect_container(self.container_id)["State"]["Health"]["Status"])
 
     def check_health(self) -> bool:
-        """
-        Checks whether the container's health status is 'healthy'.
-        """
+        """Check whether the container's health status is 'healthy'."""
         return self.get_health_status() == "healthy"
 
 
 @pytest.fixture(scope="session")
-def webhook_server_for_testing() -> Generator:
-    """
-    Builds and deploys a Docker container with the webhook server.
+def webhook_server_for_testing() -> Generator[None]:
+    """Build and deploy a Docker container with the webhook server.
+
     Checks if the server is running and healthy, then yields to the test.
     After completion, the container and images are stopped and deleted.
     """
-    # Initialize Docker client
     docker_client = from_env()
 
     # Remove the container image if exists
-    log.debug("Clean up existing docker container...")
+    logger.debug("Clean up existing docker container...")
     container: Container
     try:
         container = docker_client.containers.get(CONTAINER_NAME)
-        container.remove(force=True)  # force=True if you want to remove a running container
-        log.debug("Container %s has been removed.", CONTAINER_NAME)
+        container.remove(force=True)
+        logger.debug(f"Container {CONTAINER_NAME} has been removed.")
     except NotFound:
-        log.debug("Container %s not found.", CONTAINER_NAME)
+        logger.debug(f"Container {CONTAINER_NAME} not found.")
     except APIError as e:
-        log.debug("Error removing container %s: %s", CONTAINER_NAME, e)
+        logger.debug(f"Error removing container {CONTAINER_NAME}: {e}")
 
     # Build the container image
-    log.debug("Building Docker image...")
+    logger.debug("Building Docker image...")
     image: Image
     image, _ = docker_client.images.build(
-        # Adjust the path to where the Dockerfile is located
         path=".",
         dockerfile="dockerfiles/ondewo-nlu-webhook-server-python.Dockerfile",
         rm=True,
@@ -102,18 +95,16 @@ def webhook_server_for_testing() -> Generator:
     )
 
     # Deploy the container with ports mapped
-    log.debug("Deploying Docker container...")
+    logger.debug("Deploying Docker container...")
     webhook_server_port: int = int(os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_PORT", ""))
-    # Filter necessary environment variables if needed
     environment: dict[str, str] = {
         key: value for key, value in os.environ.items() if key.startswith("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON")
     }
     container = docker_client.containers.run(
-        image=image.id,  # Use the image ID returned after building
+        image=image.id,
         ports={f"{webhook_server_port}/tcp": webhook_server_port},
         detach=True,
         name=CONTAINER_NAME,
-        # auto_remove=True,
         environment=environment,
     )
     time.sleep(5)
@@ -129,32 +120,27 @@ def webhook_server_for_testing() -> Generator:
     custom_docker_client: CustomDockerClient = CustomDockerClient(container=container)
     retries_health: int = 0
     while not custom_docker_client.check_health() and retries_health < 2:
-        log.debug("Waiting for the server to become healthy...")
+        logger.debug("Waiting for the server to become healthy...")
         time.sleep(5)
         retries_health += 1
 
-    # Yield to the test after the container is up and healthy
     yield
 
-    # Cleanup: Stop the container and remove the image
-    log.debug("Stopping and cleaning up the container...")
+    # Cleanup
+    logger.debug("Stopping and cleaning up the container...")
     container.stop()
     container.remove()
 
-    # Optionally, remove the image
-    log.debug("Removing Docker image: %s", IMAGE_NAME)
+    logger.debug(f"Removing Docker image: {IMAGE_NAME}")
     docker_client.images.remove(IMAGE_NAME)
 
 
 @pytest.fixture
 def headers() -> dict[str, str]:
-    # Get username and password from environment
     username: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME", "")
     password: str = os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD", "")
 
-    # Create the HTTP Basic Auth header
     credentials: str = f"{username}:{password}"
     encoded_credentials: str = b64encode(credentials.encode("utf-8")).decode("utf-8")
 
-    # Return headers including the Basic Auth header
     return {"Authorization": f"Basic {encoded_credentials}"}

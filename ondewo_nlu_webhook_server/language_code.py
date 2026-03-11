@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from functools import lru_cache
 from typing import (
@@ -6,9 +8,10 @@ from typing import (
 )
 
 from langcodes import Language
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 
 from ondewo_nlu_webhook_server.custom_exceptions import NotALanguageError
+
 
 LOCALES_DICT: dict[str, str] = {
     "multi": "en_US.utf8",
@@ -905,14 +908,14 @@ class LanguageCode(Enum):
         """
         if not lang:
             err_msg = f"{lang} expected to be of type LanguageCode. Obtained type {type(lang)}"
-            log.error(err_msg)
+            logger.error(err_msg)
             if raise_exception:
                 raise NotALanguageError(err_msg)
 
         is_component_language: bool = isinstance(lang, LanguageCode)
         if not is_component_language:
             err_msg = f"{lang} expected to be of type LanguageCode. Obtained type {type(lang)}"
-            log.error(err_msg)
+            logger.error(err_msg)
             if raise_exception:
                 raise NotALanguageError(err_msg)
 
@@ -928,7 +931,7 @@ class LanguageCode(Enum):
             assert language_str is not None
             return language_str.lower()
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_language(self) -> Language:
@@ -938,7 +941,7 @@ class LanguageCode(Enum):
             assert language
             return language
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_long_name(self) -> str:
@@ -952,7 +955,7 @@ class LanguageCode(Enum):
             language_name: str = language.language_name().lower()
             return language_name
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_locale(self) -> str:

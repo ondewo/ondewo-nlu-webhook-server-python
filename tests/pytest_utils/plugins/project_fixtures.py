@@ -14,8 +14,8 @@
 
 import os
 
-from _pytest.config import Config
 import pytest
+from _pytest.config import Config
 
 
 @pytest.fixture(scope="session")

@@ -12,24 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import glob
 import os
 
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
+
+def make_extensions(base_dir: str) -> list[Extension]:
+    """Create Cython Extension objects for all .py files, excluding __main__.py.
+
+    __main__.py files must remain as plain Python source because
+    'python -m package' cannot execute compiled .so entry points.
+    """
+    extensions = []
+    for filepath in sorted(glob.glob(f"{base_dir}/**/*.py", recursive=True)):
+        if filepath.endswith("__main__.py"):
+            continue
+        # Convert file path to dotted module name: a/b/c.py -> a.b.c
+        module_name = filepath.replace(os.sep, ".").removesuffix(".py")
+        extensions.append(Extension(module_name, [filepath]))
+    return extensions
+
+
 # Cython extensions configuration
 # Most project metadata is now in pyproject.toml
 extensions = cythonize(
-    [
-        Extension(
-            "ondewo_nlu_webhook_server.*",
-            ["ondewo_nlu_webhook_server/**/*.py"],
-        ),
-        Extension(
-            "ondewo_nlu_webhook_server_custom_integration.*",
-            ["ondewo_nlu_webhook_server_custom_integration/**/*.py"],
-        ),
-    ],
+    make_extensions("ondewo_nlu_webhook_server")
+    + make_extensions("ondewo_nlu_webhook_server_custom_integration"),
     language_level=3,
     nthreads=os.cpu_count(),
 )

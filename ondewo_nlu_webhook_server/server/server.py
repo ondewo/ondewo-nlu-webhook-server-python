@@ -30,7 +30,9 @@ This is not recommended for production
 """
 
 import json
+import time
 from json import JSONDecodeError
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -43,8 +45,7 @@ from fastapi.security import (
     HTTPBasicCredentials,
     OAuth2PasswordBearer,
 )
-from ondewo.logging.decorators import Timer
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 from pydantic_core import ValidationError
 from starlette import status
 
@@ -58,7 +59,8 @@ from ondewo_nlu_webhook_server.server.base_models import (
 from ondewo_nlu_webhook_server.server.relay import call_custom_code
 from ondewo_nlu_webhook_server.version import __version__
 
-router = APIRouter()
+
+router: APIRouter = APIRouter()
 
 # welcome message
 welcome_message: str = (
@@ -67,26 +69,26 @@ welcome_message: str = (
 )
 
 # region security: Bearer authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def verify_token(token=Depends(oauth2_scheme)) -> str:  # type: ignore
+def verify_token(token: Any = Depends(oauth2_scheme)) -> str:  # type: ignore[assignment]
     if token != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_BEARER:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return token  # type: ignore
+    return token
 
 
 # endregion security: Bearer authentication
 
 # region security: Http Basic authentication
-security = HTTPBasic()
+security: HTTPBasic = HTTPBasic()
 
 
-def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  # type: ignore
+def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)) -> HTTPBasicCredentials:  # type: ignore[assignment]
     if (
         credentials.username != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_USERNAME
         or credentials.password != WebhookGlobals.ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_HTTP_BASIC_AUTH_PASSWORD
@@ -96,75 +98,32 @@ def verify_credentials(credentials=Depends(security)) -> HTTPBasicCredentials:  
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Basic"},
         )
-    return credentials  # type: ignore
+    return credentials
 
 
 # endregion security: Http Basic authentication
 
 
 @router.post("/{call_case}", response_model=WebhookResponse)
-@Timer(logger=log.debug, log_arguments=True, message="call_case. Elapsed time: {:.5f}")
 async def call_case(
     call_case: str,
     request: Request,
     # NOTE: activate token or http basic credentials authentication
-    # token: str = Depends(verify_token),  # type: ignore
-    credentials: HTTPBasicCredentials = Depends(verify_credentials),  # type: ignore
+    # token: str = Depends(verify_token),
+    credentials: HTTPBasicCredentials = Depends(verify_credentials),  # type: ignore[assignment]
 ) -> WebhookResponse:
-    """
-    Handles HTTP POST requests sent to [server_address]/<call_case>.
-
-    This endpoint processes the incoming messages based on the specified `call_case` parameter
-    and returns a corresponding response in JSON format. The processing of the request
-    depends on the `call_case` value and is managed accordingly. Both Basic Authentication
-    and token verification are required to access this endpoint.
-
-    **Message Handling**:
-    - Messages are expected to be in JSON format.
-    - If `print_active` is set to `True`, both received and response messages will be logged.
-
-    **Authentication**:
-    - The endpoint requires HTTP Basic Authentication. The `username` and `password`
-      must be provided in the `Authorization` header.
-    - Additionally, a valid token is required to access the endpoint, which is passed
-      through the `token` parameter. (Currently uses `verify_token` for validation).
+    """Handles HTTP POST requests sent to [server_address]/<call_case>.
 
     Args:
-        call_case (str): The processing type to be performed, where:
-            - `"slot_filling"`: Sends parameter values back to `ondewo-cai`.
-            - `"response_refinement"`: Refines the fulfillment messages.
-        request (Request): The request object containing the body of the message to be processed.
-        token (str, optional): A token for request verification. (Currently uses `verify_token`).
-        credentials (HTTPBasicCredentials, optional): Basic authentication credentials for user validation.
+        call_case: The processing type ("slot_filling" or "response_refinement").
+        request: The request object containing the body of the message.
+        credentials: Basic authentication credentials for user validation.
 
     Returns:
-        WebhookResponse: A JSON object with the following structure:
-            - **fulfillmentText**: Text of the fulfillment message (currently unused by `ondewo-cai`).
-            - **fulfillmentMessages**: A list of response messages for the detected intent.
-            - **source**: A string passed directly to `QueryResult.webhook_source` of `ondewo-cai`.
-            - **payload**: A dictionary passed directly to `QueryResult.webhook_payload` of `ondewo-cai`.
-            - **outputContexts**: List of active contexts that the agent is aware of.
-            - **followupEventInput**: (Currently unused).
-
-    Example:
-        If `call_case` is `"slot_filling"`, the response may include a message such as:
-        ```json
-        {
-            "fulfillmentText": "Please provide your name.",
-            "fulfillmentMessages": [{"text": {"text": ["Please provide your name."]}}],
-            "source": "ondewo-cai",
-            "payload": {},
-            "outputContexts": [{"name": "contexts/active", "lifespanCount": 5}],
-            "followupEventInput": null
-        }
-        ```
-
-    **Error Handling**:
-    - If an invalid `call_case` is provided, or if an internal error occurs, a 400 or 500 HTTP response will be
-      returned, depending on the error type.
-    - If authentication fails (either Basic Authentication or token verification), a 401 Unauthorized response
-      will be returned.
+        WebhookResponse with fulfillment data.
     """
+    start_time: float = time.perf_counter()
+
     if call_case not in CALL_CASES:
         raise HTTPException(status_code=400, detail=f"Unknown call_case: {call_case}")
 
@@ -172,30 +131,26 @@ async def call_case(
 
     try:
         request_json = await request.json()
-        log.debug(f"server.py: call_case: webhook_request={request_json}")
+        logger.debug(f"server.py: call_case: webhook_request={request_json}")
     except JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format")
 
     webhook_request: WebhookRequest
     if isinstance(request_json, str):
-        # ondewo-nlu-cai sends the request as a string hence we need to load it
         request_json_loaded: dict = json.loads(request_json)
         try:
             webhook_request = WebhookRequest(**request_json_loaded)
         except ValidationError:
             raise HTTPException(status_code=400, detail="Invalid request format")
     else:
-        # ondewo-aim sends the request as a json payload
         try:
             webhook_request = WebhookRequest(**request_json)
         except ValidationError:
             raise HTTPException(status_code=400, detail="Invalid request format")
 
-    # get the webhook request object form the fastapi request
     if not WebhookRequest.model_validate(webhook_request):
         raise HTTPException(status_code=400, detail="Invalid WebhookRequest format")
 
-    # set headers of request into the WebhookRequest object
     webhook_request.headers = dict(request.headers)
 
     webhook_response: WebhookResponse = WebhookResponse(
@@ -209,9 +164,9 @@ async def call_case(
         followupEventInput=EventInput(),
     )
 
-    intent_display_name = webhook_request.queryResult.intent.displayName
-    session_id = webhook_request.session
-    log.debug(f"server.py: call_case: session_id={session_id} and intent_display_name={intent_display_name}")
+    intent_display_name: str = webhook_request.queryResult.intent.displayName
+    session_id: str = webhook_request.session
+    logger.debug(f"server.py: call_case: session_id={session_id} and intent_display_name={intent_display_name}")
 
     webhook_response = await call_custom_code(
         webhook_request=webhook_request,
@@ -222,20 +177,23 @@ async def call_case(
     if not WebhookResponse.model_validate(webhook_response):
         raise HTTPException(status_code=500, detail="Invalid response format")
 
-    log.debug(
+    logger.debug(
         f"webhook_response.model_dump_json(): {json.dumps(webhook_response.model_dump(), indent=2)}",
     )
+
+    end_time: float = time.perf_counter()
+    logger.debug(f"server.py: call_case: Elapsed time: {end_time - start_time:.5f}")
     return webhook_response
 
 
-# async def index(_: str = Depends(get_current_user)) -> Dict[str, str]:
 @router.get("/")
-@Timer(logger=log.debug, log_arguments=False, message="index. Elapsed time: {:.5f}")
 async def index() -> dict[str, str]:
-    """
-    Provides a welcome message when accessing the root endpoint.
-    """
-    return {"message": welcome_message}
+    """Provides a welcome message when accessing the root endpoint."""
+    start_time: float = time.perf_counter()
+    result: dict[str, str] = {"message": welcome_message}
+    end_time: float = time.perf_counter()
+    logger.debug(f"server.py: index: Elapsed time: {end_time - start_time:.5f}")
+    return result
 
 
 @router.get("/health")
