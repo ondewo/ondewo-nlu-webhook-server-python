@@ -241,7 +241,7 @@ class IntentMessage(BaseModel):
 
     @field_validator("platform")
     @classmethod
-    def validate_platform(cls, value: str) -> str:
+    def validate_platform(cls, value: str | None) -> str | None:
         if value and value not in INTENT_MESSAGE_PLATFORM_ENUM_SET:
             raise ValueError(
                 f"Provided platform name '{value}' is not valid. "

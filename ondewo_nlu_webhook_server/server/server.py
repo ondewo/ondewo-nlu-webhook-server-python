@@ -127,7 +127,7 @@ async def call_case(
     if call_case not in CALL_CASES:
         raise HTTPException(status_code=400, detail=f"Unknown call_case: {call_case}")
 
-    request_json: dict
+    request_json: dict | str
 
     try:
         request_json = await request.json()
@@ -140,12 +140,12 @@ async def call_case(
         request_json_loaded: dict = json.loads(request_json)
         try:
             webhook_request = WebhookRequest(**request_json_loaded)
-        except ValidationError:
+        except (ValidationError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid request format")
     else:
         try:
             webhook_request = WebhookRequest(**request_json)
-        except ValidationError:
+        except (ValidationError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid request format")
 
     webhook_request.headers = dict(request.headers)
