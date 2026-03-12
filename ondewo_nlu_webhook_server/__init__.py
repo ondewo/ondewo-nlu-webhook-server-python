@@ -11,3 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from ondewo_nlu_webhook_server.logging_config import configure_logging
+from ondewo_nlu_webhook_server.version import __version__
+
+
+configure_logging()
+
+__all__: list[str] = ["__version__"]

@@ -1,0 +1,30 @@
+[MASTER]
+# Use multiple processes to speed up Pylint
+jobs=0
+
+[MESSAGES CONTROL]
+# Disable specific warnings
+disable=
+    # Disable invalid-name for locale codes (they're intentionally lowercase)
+    invalid-name,
+    # Disable missing docstring warnings (too strict for this project)
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    # Disable line-too-long (handled by black/ruff with 120 char limit)
+    line-too-long,
+    # Disable no-name-in-module for Cython-compiled modules
+    no-name-in-module,
+    # Disable too-many-ancestors (inheritance is complex in test fixtures)
+    too-many-ancestors,
+    # Disable fixme warnings (TODO comments are acceptable)
+    fixme
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+[TYPECHECK]
+# List of members which are set dynamically and missed by pylint inference
+# and so shouldn't trigger E1101 when accessed
+generated-members=REQUEST,acl_users,aq_parent

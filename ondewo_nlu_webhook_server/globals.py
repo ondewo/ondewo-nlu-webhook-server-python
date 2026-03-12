@@ -18,8 +18,7 @@ from typing import ClassVar
 
 
 @dataclass
-class WebhookGlobals():
-
+class WebhookGlobals:
     ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST: ClassVar[str] = str(
         os.getenv("ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_SERVER_HOST", "0.0.0.0").strip(),
     )

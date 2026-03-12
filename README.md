@@ -38,15 +38,70 @@ There are 2 cases for which the webhook call is used:
 
 For details on these cases and integration of custom code, refer to the section on **custom code** below.
 
+## 🚀 Quick Start
+
+New to the project? Check out our guides:
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Comprehensive development guide
+- **[SETUP_SUMMARY.md](SETUP_SUMMARY.md)** - Configuration reference
+
+### Quick Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/ondewo/ondewo-nlu-webhook-server-python.git
+cd ondewo-nlu-webhook-server-python
+make setup_developer_environment_locally
+
+# Verify setup
+python scripts/verify_setup.py
+
+# Run tests
+pytest
+```
+
+## 🛠️ Development Tools
+
+This project uses modern Python development tools:
+
+- **Python 3.14** - Latest Python version with modern type hints
+- **Ruff** - Fast Python linter and formatter (10-100x faster than Flake8)
+- **Black** - Uncompromising code formatter
+- **MyPy** - Static type checker with strict mode
+- **Pytest** - Modern testing framework with coverage
+- **Pre-commit** - Git hooks for code quality
+- **UV** - Fast package installer
+
+### VS Code / Cursor Integration
+
+✅ Automatic test discovery and execution
+✅ Debug configurations for tests and server
+✅ Format on save with Ruff and Black
+✅ Real-time linting and type checking
+✅ Coverage gutters in editor
+✅ 14 pre-configured tasks
+
+See [.vscode/](.vscode/) for complete configuration.
+
 ## Requirements / Packages
 
 To install the required python libraries for running the webhook server, use:
 
-> pip install --no-cache-dir -r requirements.txt
+> uv pip install -e .
 
 or for development
 
 > make setup_developer_environment_locally
+
+### Python 3.14 Compatibility
+
+If you're using Python 3.14, some binary packages need to be built from source. This is handled automatically by the Makefile, but if you encounter import errors, see:
+
+- **[PYTHON_3.14_COMPATIBILITY.md](PYTHON_3.14_COMPATIBILITY.md)** - Detailed compatibility guide
+- **[PYTEST_FIX_SUMMARY.md](PYTEST_FIX_SUMMARY.md)** - Summary of fixes applied
+
+The setup process will automatically detect Python 3.14 and rebuild necessary packages from source (~13-15 minutes).
 
 # Deploy Webhook Server
 

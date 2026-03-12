@@ -1,587 +1,586 @@
+from __future__ import annotations
+
 from enum import Enum
 from functools import lru_cache
 from typing import (
     Any,
-    Dict,
-    List,
     NewType,
-    Optional,
-    Set,
 )
 
 from langcodes import Language
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 
 from ondewo_nlu_webhook_server.custom_exceptions import NotALanguageError
 
-LOCALES_DICT: Dict[str, str] = {
-    'multi': 'en_US.utf8',
-    'aa_DJ': 'aa_DJ.utf8',  # Afar (Djibouti)
-    'aa_ER': 'aa_ER.utf8',  # Afar (Eritrea)
-    'aa_ER@saaho': 'aa_ER@saaho.utf8',  # Afar (Eritrea, Saaho)
-    'aa_ET': 'aa_ET.utf8',  # Afar (Ethiopia)
-    'ab_GE': 'ab_GE.utf8',  # Abkhaz (Georgia)
-    'ae_AF': 'ae_AF.utf8',  # Avestan (Afghanistan)
-    'af_ZA': 'af_ZA.utf8',  # Afrikaans (South Africa)
-    'agr_PE': 'agr_PE.utf8',  # Aguaruna (Peru)
-    'ak_GH': 'ak_GH.utf8',  # Akan (Ghana)
-    'am_ET': 'am_ET.utf8',  # Amharic (Ethiopia)
-    'an_ES': 'an_ES.utf8',  # Aragonese (Spain)
-    'anp_IN': 'anp_IN.utf8',  # Angika (India)
-    'ar_AE': 'ar_AE.utf8',  # Arabic (United Arab Emirates)
-    'ar_BH': 'ar_BH.utf8',  # Arabic (Bahrain)
-    'ar_DZ': 'ar_DZ.utf8',  # Arabic (Algeria)
-    'ar_EG': 'ar_EG.utf8',  # Arabic (Egypt)
-    'ar_IN': 'ar_IN.utf8',  # Arabic (India)
-    'ar_IQ': 'ar_IQ.utf8',  # Arabic (Iraq)
-    'ar_JO': 'ar_JO.utf8',  # Arabic (Jordan)
-    'ar_KW': 'ar_KW.utf8',  # Arabic (Kuwait)
-    'ar_LB': 'ar_LB.utf8',  # Arabic (Lebanon)
-    'ar_LY': 'ar_LY.utf8',  # Arabic (Libya)
-    'ar_MA': 'ar_MA.utf8',  # Arabic (Morocco)
-    'ar_OM': 'ar_OM.utf8',  # Arabic (Oman)
-    'ar_QA': 'ar_QA.utf8',  # Arabic (Qatar)
-    'ar_SA': 'ar_SA.utf8',  # Arabic (Saudi Arabia)
-    'ar_SD': 'ar_SD.utf8',  # Arabic (Sudan)
-    'ar_SS': 'ar_SS.utf8',  # Arabic (South Sudan)
-    'ar_SY': 'ar_SY.utf8',  # Arabic (Syria)
-    'ar_TN': 'ar_TN.utf8',  # Arabic (Tunisia)
-    'ar_YE': 'ar_YE.utf8',  # Arabic (Yemen)
-    'ayc_PE': 'ayc_PE.utf8',  # Ayacucho Quechua (Peru)
-    'az_AZ': 'az_AZ.utf8',  # Azerbaijani (Azerbaijan)
-    'az_IR': 'az_IR.utf8',  # Azerbaijani (Iran)
-    'as_IN': 'as_IN.utf8',  # Assamese (India)
-    'ast_ES': 'ast_ES.utf8',  # Asturian (Spain)
-    'be_BY': 'be_BY.utf8',  # Belarusian (Belarus)
-    'be_BY@latin': 'be_BY@latin.utf8',  # Belarusian (Latin script)
-    'bem_ZM': 'bem_ZM.utf8',  # Bemba (Zambia)
-    'ber_DZ': 'ber_DZ.utf8',  # Berber (Algeria)
-    'ber_MA': 'ber_MA.utf8',  # Berber (Morocco)
-    'bg_BG': 'bg_BG.utf8',  # Bulgarian (Bulgaria)
-    'bhb_IN': 'bhb_IN.utf8',  # Bhojpuri (India)
-    'bho_IN': 'bho_IN.utf8',  # Bhojpuri (India)
-    'bho_NP': 'bho_NP.utf8',  # Bhojpuri (Nepal)
-    'bi_VU': 'bi_VU.utf8',  # Bislama (Vanuatu)
-    'bn_BD': 'bn_BD.utf8',  # Bengali (Bangladesh)
-    'bn_IN': 'bn_IN.utf8',  # Bengali (India)
-    'bo_CN': 'bo_CN.utf8',  # Tibetan (China)
-    'bo_IN': 'bo_IN.utf8',  # Tibetan (India)
-    'br_FR': 'br_FR.utf8',  # Breton (France)
-    'brx_IN': 'brx_IN.utf8',  # Bodo (India)
-    'bs_BA': 'bs_BA.utf8',  # Bosnian (Bosnia and Herzegovina)
-    'byn_ER': 'byn_ER.utf8',  # Blin (Eritrea)
-    'C.UTF-8': 'C.UTF-8',  # C locale
-    'ca_AD': 'ca_AD.utf8',  # Catalan (Andorra)
-    'ca_ES': 'ca_ES.utf8',  # Catalan (Spain)
-    'ca_ES@valencia': 'ca_ES@valencia.utf8',  # Catalan (Valencia)
-    'ca_FR': 'ca_FR.utf8',  # Catalan (France)
-    'ca_IT': 'ca_IT.utf8',  # Catalan (Italy)
-    'ce_RU': 'ce_RU.utf8',  # Chechen (Russia)
-    'chr_US': 'chr_US.utf8',  # Cherokee (United States)
-    'ckb_IQ': 'ckb_IQ.utf8',  # Sorani Kurdish (Iraq)
-    'cmn_TW': 'cmn_TW.utf8',  # Mandarin (Taiwan)
-    'crh_UA': 'crh_UA.utf8',  # Crimean Tatar (Ukraine)
-    'cs_CZ': 'cs_CZ.utf8',  # Czech (Czech Republic)
-    'cv_RU': 'cv_RU.utf8',  # Chuvash (Russia)
-    'cy_GB': 'cy_GB.utf8',  # Welsh (United Kingdom)
-    'da_DK': 'da_DK.utf8',  # Danish (Denmark)
-    'de_AT': 'de_AT.utf8',  # German (Austria)
-    'de_BE': 'de_BE.utf8',  # German (Belgium)
-    'de_CH': 'de_CH.utf8',  # German (Switzerland)
-    'de_DE': 'de_DE.utf8',  # German (Germany)
-    'de_IT': 'de_IT.utf8',  # German (Italy)
-    'de_LI': 'de_LI.utf8',  # German (Liechtenstein)
-    'de_LU': 'de_LU.utf8',  # German (Luxembourg)
-    'doi_IN': 'doi_IN.utf8',  # Dogri (India)
-    'dsb_DE': 'dsb_DE.utf8',  # Lower Sorbian (Germany)
-    'dv_MV': 'dv_MV.utf8',  # Divehi (Maldives)
-    'dz_BT': 'dz_BT.utf8',  # Dzongkha (Bhutan)
-    'el_GR': 'el_GR.utf8',  # Greek (Greece)
-    'el_CY': 'el_CY.utf8',  # Greek (Cyprus)
-    'en_AG': 'en_AG.utf8',  # English (Antigua and Barbuda)
-    'en_AU': 'en_AU.utf8',  # English (Australia)
-    'en_BW': 'en_BW.utf8',  # English (Botswana)
-    'en_CA': 'en_CA.utf8',  # English (Canada)
-    'en_DK': 'en_DK.utf8',  # English (Denmark)
-    'en_GB': 'en_GB.utf8',  # English (United Kingdom)
-    'en_HK': 'en_HK.utf8',  # English (Hong Kong)
-    'en_IE': 'en_IE.utf8',  # English (Ireland)
-    'en_IL': 'en_IL.utf8',  # English (Israel)
-    'en_IN': 'en_IN.utf8',  # English (India)
-    'en_NG': 'en_NG.utf8',  # English (Nigeria)
-    'en_NZ': 'en_NZ.utf8',  # English (New Zealand)
-    'en_PH': 'en_PH.utf8',  # English (Philippines)
-    'en_SG': 'en_SG.utf8',  # English (Singapore)
-    'en_US': 'en_US.utf8',  # English (United States)
-    'en_ZA': 'en_ZA.utf8',  # English (South Africa)
-    'eo': 'eo.utf8',  # Esperanto
-    'es_AR': 'es_AR.utf8',  # Spanish (Argentina)
-    'es_BO': 'es_BO.utf8',  # Spanish (Bolivia)
-    'es_CL': 'es_CL.utf8',  # Spanish (Chile)
-    'es_CO': 'es_CO.utf8',  # Spanish (Colombia)
-    'es_CR': 'es_CR.utf8',  # Spanish (Costa Rica)
-    'es_DO': 'es_DO.utf8',  # Spanish (Dominican Republic)
-    'es_EC': 'es_EC.utf8',  # Spanish (Ecuador)
-    'es_ES': 'es_ES.utf8',  # Spanish (Spain)
-    'es_GT': 'es_GT.utf8',  # Spanish (Guatemala)
-    'es_HN': 'es_HN.utf8',  # Spanish (Honduras)
-    'es_MX': 'es_MX.utf8',  # Spanish (Mexico)
-    'es_NI': 'es_NI.utf8',  # Spanish (Nicaragua)
-    'es_PA': 'es_PA.utf8',  # Spanish (Panama)
-    'es_PY': 'es_PY.utf8',  # Spanish (Paraguay)
-    'es_SV': 'es_SV.utf8',  # Spanish (El Salvador)
-    'es_US': 'es_US.utf8',  # Spanish (United States)
-    'es_UY': 'es_UY.utf8',  # Spanish (Uruguay)
-    'es_VE': 'es_VE.utf8',  # Spanish (Venezuela)
-    'et_EE': 'et_EE.utf8',  # Estonian (Estonia)
-    'eu_ES': 'eu_ES.utf8',  # Basque (Spain)
-    'fa_AF': 'fa_AF.utf8',  # Persian (Afghanistan)
-    'fa_IR': 'fa_IR.utf8',  # Persian (Iran)
-    'fi_FI': 'fi_FI.utf8',  # Finnish (Finland)
-    'fil_PH': 'fil_PH.utf8',  # Filipino (Philippines)
-    'fj_FJ': 'fj_FJ.utf8',  # Fijian (Fiji)
-    'fo_FO': 'fo_FO.utf8',  # Faroese (Faroe Islands)
-    'fr_BE': 'fr_BE.utf8',  # French (Belgium)
-    'fr_CA': 'fr_CA.utf8',  # French (Canada)
-    'fr_CH': 'fr_CH.utf8',  # French (Switzerland)
-    'fr_FR': 'fr_FR.utf8',  # French (France)
-    'fr_LU': 'fr_LU.utf8',  # French (Luxembourg)
-    'fr_MC': 'fr_MC.utf8',  # French (Monaco)
-    'fr_RE': 'fr_RE.utf8',  # French (Réunion)
-    'ga_IE': 'ga_IE.utf8',  # Irish (Ireland)
-    'gd_GB': 'gd_GB.utf8',  # Scottish Gaelic (United Kingdom)
-    'gl_ES': 'gl_ES.utf8',  # Galician (Spain)
-    'gn_PY': 'gn_PY.utf8',  # Guarani (Paraguay)
-    'gu_IN': 'gu_IN.utf8',  # Gujarati (India)
-    'gux_PE': 'gux_PE.utf8',  # Aguaruna (Peru)
-    'ha_NG': 'ha_NG.utf8',  # Hausa (Nigeria)
-    'hak_TW': 'hak_TW.utf8',  # Hakka (Taiwan)
-    'he_IL': 'he_IL.utf8',  # Hebrew (Israel)
-    'hi_IN': 'hi_IN.utf8',  # Hindi (India)
-    'hr_HR': 'hr_HR.utf8',  # Croatian (Croatia)
-    'hsb_DE': 'hsb_DE.utf8',  # Upper Sorbian (Germany)
-    'ht_HT': 'ht_HT.utf8',  # Haitian Creole (Haiti)
-    'hu_HU': 'hu_HU.utf8',  # Hungarian (Hungary)
-    'hy_AM': 'hy_AM.utf8',  # Armenian (Armenia)
-    'ia': 'ia.utf8',  # Interlingua
-    'id_ID': 'id_ID.utf8',  # Indonesian (Indonesia)
-    'ig_NG': 'ig_NG.utf8',  # Igbo (Nigeria)
-    'ii_CN': 'ii_CN.utf8',  # Yi (China)
-    'is_IS': 'is_IS.utf8',  # Icelandic (Iceland)
-    'it_CH': 'it_CH.utf8',  # Italian (Switzerland)
-    'it_IT': 'it_IT.utf8',  # Italian (Italy)
-    'ja_JP': 'ja_JP.utf8',  # Japanese (Japan)
-    'jv_ID': 'jv_ID.utf8',  # Javanese (Indonesia)
-    'ka_GE': 'ka_GE.utf8',  # Georgian (Georgia)
-    'kab_DZ': 'kab_DZ.utf8',  # Kabyle (Algeria)
-    'kac_MM': 'kac_MM.utf8',  # Kachin (Myanmar)
-    'kbd_RU': 'kbd_RU.utf8',  # Kabardian (Russia)
-    'kha_IN': 'kha_IN.utf8',  # Khasi (India)
-    'khm_KH': 'khm_KH.utf8',  # Khmer (Cambodia)
-    'ki_KE': 'ki_KE.utf8',  # Kikuyu (Kenya)
-    'kj_AO': 'kj_AO.utf8',  # Kuanyama (Angola)
-    'kk_KZ': 'kk_KZ.utf8',  # Kazakh (Kazakhstan)
-    'kl_GL': 'kl_GL.utf8',  # Greenlandic (Greenland)
-    'km_KH': 'km_KH.utf8',  # Khmer (Cambodia)
-    'kn_IN': 'kn_IN.utf8',  # Kannada (India)
-    'ko_KR': 'ko_KR.utf8',  # Korean (South Korea)
-    'kri_LR': 'kri_LR.utf8',  # Krio (Liberia)
-    'ku_TR': 'ku_TR.utf8',  # Kurdish (Turkey)
-    'ku_IQ': 'ku_IQ.utf8',  # Kurdish (Iraq)
-    'ku_SY': 'ku_SY.utf8',  # Kurdish (Syria)
-    'la': 'la.utf8',  # Latin
-    'lb_LU': 'lb_LU.utf8',  # Luxembourgish (Luxembourg)
-    'lg_UG': 'lg_UG.utf8',  # Ganda (Uganda)
-    'li_NL': 'li_NL.utf8',  # Limburgish (Netherlands)
-    'ln_CD': 'ln_CD.utf8',  # Lingala (Democratic Republic of the Congo)
-    'lo_LA': 'lo_LA.utf8',  # Lao (Laos)
-    'lt_LT': 'lt_LT.utf8',  # Lithuanian (Lithuania)
-    'lv_LV': 'lv_LV.utf8',  # Latvian (Latvia)
-    'mg_MG': 'mg_MG.utf8',  # Malagasy (Madagascar)
-    'mi_NZ': 'mi_NZ.utf8',  # Māori (New Zealand)
-    'mk_MK': 'mk_MK.utf8',  # Macedonian (North Macedonia)
-    'ml_IN': 'ml_IN.utf8',  # Malayalam (India)
-    'mn_MN': 'mn_MN.utf8',  # Mongolian (Mongolia)
-    'mo_RO': 'mo_RO.utf8',  # Moldovan (Romania)
-    'mr_IN': 'mr_IN.utf8',  # Marathi (India)
-    'ms_MY': 'ms_MY.utf8',  # Malay (Malaysia)
-    'mt_MT': 'mt_MT.utf8',  # Maltese (Malta)
-    'my_MM': 'my_MM.utf8',  # Burmese (Myanmar)
-    'na_NR': 'na_NR.utf8',  # Nauruan (Nauru)
-    'nah_MX': 'nah_MX.utf8',  # Nahuatl (Mexico)
-    'nb_NO': 'nb_NO.utf8',  # Norwegian (Bokmål, Norway)
-    'nd_ZW': 'nd_ZW.utf8',  # Northern Ndebele (Zimbabwe)
-    'ne_NP': 'ne_NP.utf8',  # Nepali (Nepal)
-    'nl_BE': 'nl_BE.utf8',  # Dutch (Belgium)
-    'nl_NL': 'nl_NL.utf8',  # Dutch (Netherlands)
-    'nn_NO': 'nn_NO.utf8',  # Norwegian (Nynorsk, Norway)
-    'no_NO': 'no_NO.utf8',  # Norwegian (Norway)
-    'nr_ZA': 'nr_ZA.utf8',  # Southern Ndebele (South Africa)
-    'nso_ZA': 'nso_ZA.utf8',  # Northern Sotho (South Africa)
-    'ny_MW': 'ny_MW.utf8',  # Chichewa (Malawi)
-    'om_ET': 'om_ET.utf8',  # Oromo (Ethiopia)
-    'or_IN': 'or_IN.utf8',  # Odia (India)
-    'os_RU': 'os_RU.utf8',  # Ossetic (Russia)
-    'pa_IN': 'pa_IN.utf8',  # Punjabi (India)
-    'pa_PK': 'pa_PK.utf8',  # Punjabi (Pakistan)
-    'pl_PL': 'pl_PL.utf8',  # Polish (Poland)
-    'ps_AF': 'ps_AF.utf8',  # Pashto (Afghanistan)
-    'pt_BR': 'pt_BR.utf8',  # Portuguese (Brazil)
-    'pt_PT': 'pt_PT.utf8',  # Portuguese (Portugal)
-    'quz_PE': 'quz_PE.utf8',  # Quechua (Peru)
-    'rm_CH': 'rm_CH.utf8',  # Romansh (Switzerland)
-    'rn_BI': 'rn_BI.utf8',  # Kirundi (Burundi)
-    'ro_RO': 'ro_RO.utf8',  # Romanian (Romania)
-    'ru_RU': 'ru_RU.utf8',  # Russian (Russia)
-    'rw_RW': 'rw_RW.utf8',  # Kinyarwanda (Rwanda)
-    'sa_IN': 'sa_IN.utf8',  # Sanskrit (India)
-    'sc_IT': 'sc_IT.utf8',  # Sardinian (Italy)
-    'sd_IN': 'sd_IN.utf8',  # Sindhi (India)
-    'se_NO': 'se_NO.utf8',  # Northern Sami (Norway)
-    'sg_CF': 'sg_CF.utf8',  # Sango (Central African Republic)
-    'sh_BA': 'sh_BA.utf8',  # Serbo-Croatian (Bosnia and Herzegovina)
-    'si_LK': 'si_LK.utf8',  # Sinhalese (Sri Lanka)
-    'sk_SK': 'sk_SK.utf8',  # Slovak (Slovakia)
-    'sl_SI': 'sl_SI.utf8',  # Slovenian (Slovenia)
-    'sm_WS': 'sm_WS.utf8',  # Samoan (Samoa)
-    'sn_ZW': 'sn_ZW.utf8',  # Shona (Zimbabwe)
-    'so_SO': 'so_SO.utf8',  # Somali (Somalia)
-    'sq_AL': 'sq_AL.utf8',  # Albanian (Albania)
-    'sr_RS': 'sr_RS.utf8',  # Serbian (Serbia)
-    'ss_ZA': 'ss_ZA.utf8',  # Swati (South Africa)
-    'st_ZA': 'st_ZA.utf8',  # Southern Sotho (South Africa)
-    'su_ID': 'su_ID.utf8',  # Sundanese (Indonesia)
-    'sv_SE': 'sv_SE.utf8',  # Swedish (Sweden)
-    'sw_TZ': 'sw_TZ.utf8',  # Swahili (Tanzania)
-    'ta_IN': 'ta_IN.utf8',  # Tamil (India)
-    'te_IN': 'te_IN.utf8',  # Telugu (India)
-    'tg_TJ': 'tg_TJ.utf8',  # Tajik (Tajikistan)
-    'th_TH': 'th_TH.utf8',  # Thai (Thailand)
-    'ti_ER': 'ti_ER.utf8',  # Tigrinya (Eritrea)
-    'tk_TM': 'tk_TM.utf8',  # Turkmen (Turkmenistan)
-    'tl_PH': 'tl_PH.utf8',  # Tagalog (Philippines)
-    'tn_ZA': 'tn_ZA.utf8',  # Tswana (South Africa)
-    'to_TO': 'to_TO.utf8',  # Tongan (Tonga)
-    'tr_TR': 'tr_TR.utf8',  # Turkish (Turkey)
-    'ts_ZA': 'ts_ZA.utf8',  # Tsonga (South Africa)
-    'tt_RU': 'tt_RU.utf8',  # Tatar (Russia)
-    'ug_CN': 'ug_CN.utf8',  # Uyghur (China)
-    'uk_UA': 'uk_UA.utf8',  # Ukrainian (Ukraine)
-    'ur_PK': 'ur_PK.utf8',  # Urdu (Pakistan)
-    'uz_UZ': 'uz_UZ.utf8',  # Uzbek (Uzbekistan)
-    'vi_VN': 'vi_VN.utf8',  # Vietnamese (Vietnam)
-    'wa_BE': 'wa_BE.utf8',  # Walloon (Belgium)
-    'xh_ZA': 'xh_ZA.utf8',  # Xhosa (South Africa)
-    'yi': 'yi.utf8',  # Yiddish
-    'yo_NG': 'yo_NG.utf8',  # Yoruba (Nigeria)
-    'za_CN': 'za_CN.utf8',  # Zhuang (China)
-    'zu_ZA': 'zu_ZA.utf8',  # Zulu (South Africa)
+
+LOCALES_DICT: dict[str, str] = {
+    "multi": "en_US.utf8",
+    "aa_DJ": "aa_DJ.utf8",  # Afar (Djibouti)
+    "aa_ER": "aa_ER.utf8",  # Afar (Eritrea)
+    "aa_ER@saaho": "aa_ER@saaho.utf8",  # Afar (Eritrea, Saaho)
+    "aa_ET": "aa_ET.utf8",  # Afar (Ethiopia)
+    "ab_GE": "ab_GE.utf8",  # Abkhaz (Georgia)
+    "ae_AF": "ae_AF.utf8",  # Avestan (Afghanistan)
+    "af_ZA": "af_ZA.utf8",  # Afrikaans (South Africa)
+    "agr_PE": "agr_PE.utf8",  # Aguaruna (Peru)
+    "ak_GH": "ak_GH.utf8",  # Akan (Ghana)
+    "am_ET": "am_ET.utf8",  # Amharic (Ethiopia)
+    "an_ES": "an_ES.utf8",  # Aragonese (Spain)
+    "anp_IN": "anp_IN.utf8",  # Angika (India)
+    "ar_AE": "ar_AE.utf8",  # Arabic (United Arab Emirates)
+    "ar_BH": "ar_BH.utf8",  # Arabic (Bahrain)
+    "ar_DZ": "ar_DZ.utf8",  # Arabic (Algeria)
+    "ar_EG": "ar_EG.utf8",  # Arabic (Egypt)
+    "ar_IN": "ar_IN.utf8",  # Arabic (India)
+    "ar_IQ": "ar_IQ.utf8",  # Arabic (Iraq)
+    "ar_JO": "ar_JO.utf8",  # Arabic (Jordan)
+    "ar_KW": "ar_KW.utf8",  # Arabic (Kuwait)
+    "ar_LB": "ar_LB.utf8",  # Arabic (Lebanon)
+    "ar_LY": "ar_LY.utf8",  # Arabic (Libya)
+    "ar_MA": "ar_MA.utf8",  # Arabic (Morocco)
+    "ar_OM": "ar_OM.utf8",  # Arabic (Oman)
+    "ar_QA": "ar_QA.utf8",  # Arabic (Qatar)
+    "ar_SA": "ar_SA.utf8",  # Arabic (Saudi Arabia)
+    "ar_SD": "ar_SD.utf8",  # Arabic (Sudan)
+    "ar_SS": "ar_SS.utf8",  # Arabic (South Sudan)
+    "ar_SY": "ar_SY.utf8",  # Arabic (Syria)
+    "ar_TN": "ar_TN.utf8",  # Arabic (Tunisia)
+    "ar_YE": "ar_YE.utf8",  # Arabic (Yemen)
+    "ayc_PE": "ayc_PE.utf8",  # Ayacucho Quechua (Peru)
+    "az_AZ": "az_AZ.utf8",  # Azerbaijani (Azerbaijan)
+    "az_IR": "az_IR.utf8",  # Azerbaijani (Iran)
+    "as_IN": "as_IN.utf8",  # Assamese (India)
+    "ast_ES": "ast_ES.utf8",  # Asturian (Spain)
+    "be_BY": "be_BY.utf8",  # Belarusian (Belarus)
+    "be_BY@latin": "be_BY@latin.utf8",  # Belarusian (Latin script)
+    "bem_ZM": "bem_ZM.utf8",  # Bemba (Zambia)
+    "ber_DZ": "ber_DZ.utf8",  # Berber (Algeria)
+    "ber_MA": "ber_MA.utf8",  # Berber (Morocco)
+    "bg_BG": "bg_BG.utf8",  # Bulgarian (Bulgaria)
+    "bhb_IN": "bhb_IN.utf8",  # Bhojpuri (India)
+    "bho_IN": "bho_IN.utf8",  # Bhojpuri (India)
+    "bho_NP": "bho_NP.utf8",  # Bhojpuri (Nepal)
+    "bi_VU": "bi_VU.utf8",  # Bislama (Vanuatu)
+    "bn_BD": "bn_BD.utf8",  # Bengali (Bangladesh)
+    "bn_IN": "bn_IN.utf8",  # Bengali (India)
+    "bo_CN": "bo_CN.utf8",  # Tibetan (China)
+    "bo_IN": "bo_IN.utf8",  # Tibetan (India)
+    "br_FR": "br_FR.utf8",  # Breton (France)
+    "brx_IN": "brx_IN.utf8",  # Bodo (India)
+    "bs_BA": "bs_BA.utf8",  # Bosnian (Bosnia and Herzegovina)
+    "byn_ER": "byn_ER.utf8",  # Blin (Eritrea)
+    "C.UTF-8": "C.UTF-8",  # C locale
+    "ca_AD": "ca_AD.utf8",  # Catalan (Andorra)
+    "ca_ES": "ca_ES.utf8",  # Catalan (Spain)
+    "ca_ES@valencia": "ca_ES@valencia.utf8",  # Catalan (Valencia)
+    "ca_FR": "ca_FR.utf8",  # Catalan (France)
+    "ca_IT": "ca_IT.utf8",  # Catalan (Italy)
+    "ce_RU": "ce_RU.utf8",  # Chechen (Russia)
+    "chr_US": "chr_US.utf8",  # Cherokee (United States)
+    "ckb_IQ": "ckb_IQ.utf8",  # Sorani Kurdish (Iraq)
+    "cmn_TW": "cmn_TW.utf8",  # Mandarin (Taiwan)
+    "crh_UA": "crh_UA.utf8",  # Crimean Tatar (Ukraine)
+    "cs_CZ": "cs_CZ.utf8",  # Czech (Czech Republic)
+    "cv_RU": "cv_RU.utf8",  # Chuvash (Russia)
+    "cy_GB": "cy_GB.utf8",  # Welsh (United Kingdom)
+    "da_DK": "da_DK.utf8",  # Danish (Denmark)
+    "de_AT": "de_AT.utf8",  # German (Austria)
+    "de_BE": "de_BE.utf8",  # German (Belgium)
+    "de_CH": "de_CH.utf8",  # German (Switzerland)
+    "de_DE": "de_DE.utf8",  # German (Germany)
+    "de_IT": "de_IT.utf8",  # German (Italy)
+    "de_LI": "de_LI.utf8",  # German (Liechtenstein)
+    "de_LU": "de_LU.utf8",  # German (Luxembourg)
+    "doi_IN": "doi_IN.utf8",  # Dogri (India)
+    "dsb_DE": "dsb_DE.utf8",  # Lower Sorbian (Germany)
+    "dv_MV": "dv_MV.utf8",  # Divehi (Maldives)
+    "dz_BT": "dz_BT.utf8",  # Dzongkha (Bhutan)
+    "el_GR": "el_GR.utf8",  # Greek (Greece)
+    "el_CY": "el_CY.utf8",  # Greek (Cyprus)
+    "en_AG": "en_AG.utf8",  # English (Antigua and Barbuda)
+    "en_AU": "en_AU.utf8",  # English (Australia)
+    "en_BW": "en_BW.utf8",  # English (Botswana)
+    "en_CA": "en_CA.utf8",  # English (Canada)
+    "en_DK": "en_DK.utf8",  # English (Denmark)
+    "en_GB": "en_GB.utf8",  # English (United Kingdom)
+    "en_HK": "en_HK.utf8",  # English (Hong Kong)
+    "en_IE": "en_IE.utf8",  # English (Ireland)
+    "en_IL": "en_IL.utf8",  # English (Israel)
+    "en_IN": "en_IN.utf8",  # English (India)
+    "en_NG": "en_NG.utf8",  # English (Nigeria)
+    "en_NZ": "en_NZ.utf8",  # English (New Zealand)
+    "en_PH": "en_PH.utf8",  # English (Philippines)
+    "en_SG": "en_SG.utf8",  # English (Singapore)
+    "en_US": "en_US.utf8",  # English (United States)
+    "en_ZA": "en_ZA.utf8",  # English (South Africa)
+    "eo": "eo.utf8",  # Esperanto
+    "es_AR": "es_AR.utf8",  # Spanish (Argentina)
+    "es_BO": "es_BO.utf8",  # Spanish (Bolivia)
+    "es_CL": "es_CL.utf8",  # Spanish (Chile)
+    "es_CO": "es_CO.utf8",  # Spanish (Colombia)
+    "es_CR": "es_CR.utf8",  # Spanish (Costa Rica)
+    "es_DO": "es_DO.utf8",  # Spanish (Dominican Republic)
+    "es_EC": "es_EC.utf8",  # Spanish (Ecuador)
+    "es_ES": "es_ES.utf8",  # Spanish (Spain)
+    "es_GT": "es_GT.utf8",  # Spanish (Guatemala)
+    "es_HN": "es_HN.utf8",  # Spanish (Honduras)
+    "es_MX": "es_MX.utf8",  # Spanish (Mexico)
+    "es_NI": "es_NI.utf8",  # Spanish (Nicaragua)
+    "es_PA": "es_PA.utf8",  # Spanish (Panama)
+    "es_PY": "es_PY.utf8",  # Spanish (Paraguay)
+    "es_SV": "es_SV.utf8",  # Spanish (El Salvador)
+    "es_US": "es_US.utf8",  # Spanish (United States)
+    "es_UY": "es_UY.utf8",  # Spanish (Uruguay)
+    "es_VE": "es_VE.utf8",  # Spanish (Venezuela)
+    "et_EE": "et_EE.utf8",  # Estonian (Estonia)
+    "eu_ES": "eu_ES.utf8",  # Basque (Spain)
+    "fa_AF": "fa_AF.utf8",  # Persian (Afghanistan)
+    "fa_IR": "fa_IR.utf8",  # Persian (Iran)
+    "fi_FI": "fi_FI.utf8",  # Finnish (Finland)
+    "fil_PH": "fil_PH.utf8",  # Filipino (Philippines)
+    "fj_FJ": "fj_FJ.utf8",  # Fijian (Fiji)
+    "fo_FO": "fo_FO.utf8",  # Faroese (Faroe Islands)
+    "fr_BE": "fr_BE.utf8",  # French (Belgium)
+    "fr_CA": "fr_CA.utf8",  # French (Canada)
+    "fr_CH": "fr_CH.utf8",  # French (Switzerland)
+    "fr_FR": "fr_FR.utf8",  # French (France)
+    "fr_LU": "fr_LU.utf8",  # French (Luxembourg)
+    "fr_MC": "fr_MC.utf8",  # French (Monaco)
+    "fr_RE": "fr_RE.utf8",  # French (Réunion)
+    "ga_IE": "ga_IE.utf8",  # Irish (Ireland)
+    "gd_GB": "gd_GB.utf8",  # Scottish Gaelic (United Kingdom)
+    "gl_ES": "gl_ES.utf8",  # Galician (Spain)
+    "gn_PY": "gn_PY.utf8",  # Guarani (Paraguay)
+    "gu_IN": "gu_IN.utf8",  # Gujarati (India)
+    "gux_PE": "gux_PE.utf8",  # Aguaruna (Peru)
+    "ha_NG": "ha_NG.utf8",  # Hausa (Nigeria)
+    "hak_TW": "hak_TW.utf8",  # Hakka (Taiwan)
+    "he_IL": "he_IL.utf8",  # Hebrew (Israel)
+    "hi_IN": "hi_IN.utf8",  # Hindi (India)
+    "hr_HR": "hr_HR.utf8",  # Croatian (Croatia)
+    "hsb_DE": "hsb_DE.utf8",  # Upper Sorbian (Germany)
+    "ht_HT": "ht_HT.utf8",  # Haitian Creole (Haiti)
+    "hu_HU": "hu_HU.utf8",  # Hungarian (Hungary)
+    "hy_AM": "hy_AM.utf8",  # Armenian (Armenia)
+    "ia": "ia.utf8",  # Interlingua
+    "id_ID": "id_ID.utf8",  # Indonesian (Indonesia)
+    "ig_NG": "ig_NG.utf8",  # Igbo (Nigeria)
+    "ii_CN": "ii_CN.utf8",  # Yi (China)
+    "is_IS": "is_IS.utf8",  # Icelandic (Iceland)
+    "it_CH": "it_CH.utf8",  # Italian (Switzerland)
+    "it_IT": "it_IT.utf8",  # Italian (Italy)
+    "ja_JP": "ja_JP.utf8",  # Japanese (Japan)
+    "jv_ID": "jv_ID.utf8",  # Javanese (Indonesia)
+    "ka_GE": "ka_GE.utf8",  # Georgian (Georgia)
+    "kab_DZ": "kab_DZ.utf8",  # Kabyle (Algeria)
+    "kac_MM": "kac_MM.utf8",  # Kachin (Myanmar)
+    "kbd_RU": "kbd_RU.utf8",  # Kabardian (Russia)
+    "kha_IN": "kha_IN.utf8",  # Khasi (India)
+    "khm_KH": "khm_KH.utf8",  # Khmer (Cambodia)
+    "ki_KE": "ki_KE.utf8",  # Kikuyu (Kenya)
+    "kj_AO": "kj_AO.utf8",  # Kuanyama (Angola)
+    "kk_KZ": "kk_KZ.utf8",  # Kazakh (Kazakhstan)
+    "kl_GL": "kl_GL.utf8",  # Greenlandic (Greenland)
+    "km_KH": "km_KH.utf8",  # Khmer (Cambodia)
+    "kn_IN": "kn_IN.utf8",  # Kannada (India)
+    "ko_KR": "ko_KR.utf8",  # Korean (South Korea)
+    "kri_LR": "kri_LR.utf8",  # Krio (Liberia)
+    "ku_TR": "ku_TR.utf8",  # Kurdish (Turkey)
+    "ku_IQ": "ku_IQ.utf8",  # Kurdish (Iraq)
+    "ku_SY": "ku_SY.utf8",  # Kurdish (Syria)
+    "la": "la.utf8",  # Latin
+    "lb_LU": "lb_LU.utf8",  # Luxembourgish (Luxembourg)
+    "lg_UG": "lg_UG.utf8",  # Ganda (Uganda)
+    "li_NL": "li_NL.utf8",  # Limburgish (Netherlands)
+    "ln_CD": "ln_CD.utf8",  # Lingala (Democratic Republic of the Congo)
+    "lo_LA": "lo_LA.utf8",  # Lao (Laos)
+    "lt_LT": "lt_LT.utf8",  # Lithuanian (Lithuania)
+    "lv_LV": "lv_LV.utf8",  # Latvian (Latvia)
+    "mg_MG": "mg_MG.utf8",  # Malagasy (Madagascar)
+    "mi_NZ": "mi_NZ.utf8",  # Māori (New Zealand)
+    "mk_MK": "mk_MK.utf8",  # Macedonian (North Macedonia)
+    "ml_IN": "ml_IN.utf8",  # Malayalam (India)
+    "mn_MN": "mn_MN.utf8",  # Mongolian (Mongolia)
+    "mo_RO": "mo_RO.utf8",  # Moldovan (Romania)
+    "mr_IN": "mr_IN.utf8",  # Marathi (India)
+    "ms_MY": "ms_MY.utf8",  # Malay (Malaysia)
+    "mt_MT": "mt_MT.utf8",  # Maltese (Malta)
+    "my_MM": "my_MM.utf8",  # Burmese (Myanmar)
+    "na_NR": "na_NR.utf8",  # Nauruan (Nauru)
+    "nah_MX": "nah_MX.utf8",  # Nahuatl (Mexico)
+    "nb_NO": "nb_NO.utf8",  # Norwegian (Bokmål, Norway)
+    "nd_ZW": "nd_ZW.utf8",  # Northern Ndebele (Zimbabwe)
+    "ne_NP": "ne_NP.utf8",  # Nepali (Nepal)
+    "nl_BE": "nl_BE.utf8",  # Dutch (Belgium)
+    "nl_NL": "nl_NL.utf8",  # Dutch (Netherlands)
+    "nn_NO": "nn_NO.utf8",  # Norwegian (Nynorsk, Norway)
+    "no_NO": "no_NO.utf8",  # Norwegian (Norway)
+    "nr_ZA": "nr_ZA.utf8",  # Southern Ndebele (South Africa)
+    "nso_ZA": "nso_ZA.utf8",  # Northern Sotho (South Africa)
+    "ny_MW": "ny_MW.utf8",  # Chichewa (Malawi)
+    "om_ET": "om_ET.utf8",  # Oromo (Ethiopia)
+    "or_IN": "or_IN.utf8",  # Odia (India)
+    "os_RU": "os_RU.utf8",  # Ossetic (Russia)
+    "pa_IN": "pa_IN.utf8",  # Punjabi (India)
+    "pa_PK": "pa_PK.utf8",  # Punjabi (Pakistan)
+    "pl_PL": "pl_PL.utf8",  # Polish (Poland)
+    "ps_AF": "ps_AF.utf8",  # Pashto (Afghanistan)
+    "pt_BR": "pt_BR.utf8",  # Portuguese (Brazil)
+    "pt_PT": "pt_PT.utf8",  # Portuguese (Portugal)
+    "quz_PE": "quz_PE.utf8",  # Quechua (Peru)
+    "rm_CH": "rm_CH.utf8",  # Romansh (Switzerland)
+    "rn_BI": "rn_BI.utf8",  # Kirundi (Burundi)
+    "ro_RO": "ro_RO.utf8",  # Romanian (Romania)
+    "ru_RU": "ru_RU.utf8",  # Russian (Russia)
+    "rw_RW": "rw_RW.utf8",  # Kinyarwanda (Rwanda)
+    "sa_IN": "sa_IN.utf8",  # Sanskrit (India)
+    "sc_IT": "sc_IT.utf8",  # Sardinian (Italy)
+    "sd_IN": "sd_IN.utf8",  # Sindhi (India)
+    "se_NO": "se_NO.utf8",  # Northern Sami (Norway)
+    "sg_CF": "sg_CF.utf8",  # Sango (Central African Republic)
+    "sh_BA": "sh_BA.utf8",  # Serbo-Croatian (Bosnia and Herzegovina)
+    "si_LK": "si_LK.utf8",  # Sinhalese (Sri Lanka)
+    "sk_SK": "sk_SK.utf8",  # Slovak (Slovakia)
+    "sl_SI": "sl_SI.utf8",  # Slovenian (Slovenia)
+    "sm_WS": "sm_WS.utf8",  # Samoan (Samoa)
+    "sn_ZW": "sn_ZW.utf8",  # Shona (Zimbabwe)
+    "so_SO": "so_SO.utf8",  # Somali (Somalia)
+    "sq_AL": "sq_AL.utf8",  # Albanian (Albania)
+    "sr_RS": "sr_RS.utf8",  # Serbian (Serbia)
+    "ss_ZA": "ss_ZA.utf8",  # Swati (South Africa)
+    "st_ZA": "st_ZA.utf8",  # Southern Sotho (South Africa)
+    "su_ID": "su_ID.utf8",  # Sundanese (Indonesia)
+    "sv_SE": "sv_SE.utf8",  # Swedish (Sweden)
+    "sw_TZ": "sw_TZ.utf8",  # Swahili (Tanzania)
+    "ta_IN": "ta_IN.utf8",  # Tamil (India)
+    "te_IN": "te_IN.utf8",  # Telugu (India)
+    "tg_TJ": "tg_TJ.utf8",  # Tajik (Tajikistan)
+    "th_TH": "th_TH.utf8",  # Thai (Thailand)
+    "ti_ER": "ti_ER.utf8",  # Tigrinya (Eritrea)
+    "tk_TM": "tk_TM.utf8",  # Turkmen (Turkmenistan)
+    "tl_PH": "tl_PH.utf8",  # Tagalog (Philippines)
+    "tn_ZA": "tn_ZA.utf8",  # Tswana (South Africa)
+    "to_TO": "to_TO.utf8",  # Tongan (Tonga)
+    "tr_TR": "tr_TR.utf8",  # Turkish (Turkey)
+    "ts_ZA": "ts_ZA.utf8",  # Tsonga (South Africa)
+    "tt_RU": "tt_RU.utf8",  # Tatar (Russia)
+    "ug_CN": "ug_CN.utf8",  # Uyghur (China)
+    "uk_UA": "uk_UA.utf8",  # Ukrainian (Ukraine)
+    "ur_PK": "ur_PK.utf8",  # Urdu (Pakistan)
+    "uz_UZ": "uz_UZ.utf8",  # Uzbek (Uzbekistan)
+    "vi_VN": "vi_VN.utf8",  # Vietnamese (Vietnam)
+    "wa_BE": "wa_BE.utf8",  # Walloon (Belgium)
+    "xh_ZA": "xh_ZA.utf8",  # Xhosa (South Africa)
+    "yi": "yi.utf8",  # Yiddish
+    "yo_NG": "yo_NG.utf8",  # Yoruba (Nigeria)
+    "za_CN": "za_CN.utf8",  # Zhuang (China)
+    "zu_ZA": "zu_ZA.utf8",  # Zulu (South Africa)
 }
 
-LANGUAGE_TO_LOCALES_DICT: Dict[str, Set[str]] = {
-    'multi': {'multi'},
-    'af': {'af-ZA'},
-    'am': {'am-ET'},
-    'ar': {
-        'ar-EG',
-        'ar-KW',
-        'ar-LB',
-        'ar-MR',
-        'ar-BH',
-        'ar-DZ',
-        'ar-TN',
-        'ar-PS',
-        'ar-SD',
-        'ar-AE',
-        'ar-SA',
-        'ar-YE',
-        'ar-MA',
-        'ar-SY',
-        'ar-LY',
-        'ar-QA',
-        'ar-OM',
-        'ar-IL',
-        'ar-IQ',
-        'ar-JO',
+LANGUAGE_TO_LOCALES_DICT: dict[str, set[str]] = {
+    "multi": {"multi"},
+    "af": {"af-ZA"},
+    "am": {"am-ET"},
+    "ar": {
+        "ar-EG",
+        "ar-KW",
+        "ar-LB",
+        "ar-MR",
+        "ar-BH",
+        "ar-DZ",
+        "ar-TN",
+        "ar-PS",
+        "ar-SD",
+        "ar-AE",
+        "ar-SA",
+        "ar-YE",
+        "ar-MA",
+        "ar-SY",
+        "ar-LY",
+        "ar-QA",
+        "ar-OM",
+        "ar-IL",
+        "ar-IQ",
+        "ar-JO",
     },
-    'az': {'az-AZ'},
-    'bg': {'bg-BG'},
-    'bn': {
-        'bn-IN',
-        'bn-BD',
+    "az": {"az-AZ"},
+    "bg": {"bg-BG"},
+    "bn": {
+        "bn-IN",
+        "bn-BD",
     },
-    'bs': {'bs-BA'},
-    'ca': {
-        'ca-ES',
-        'ca-IT',
-        'ca-FR',
-        'ca-AD',
+    "bs": {"bs-BA"},
+    "ca": {
+        "ca-ES",
+        "ca-IT",
+        "ca-FR",
+        "ca-AD",
     },
-    'cmn': {
-        'cmn-Hant-TW',
-        'cmn-Hans-HK',
-        'cmn-Hans-CN',
+    "cmn": {
+        "cmn-Hant-TW",
+        "cmn-Hans-HK",
+        "cmn-Hans-CN",
     },
-    'cs': {'cs-CZ'},
-    'ckb': {
-        'ckb-IR',
-        'ckb-IQ',
+    "cs": {"cs-CZ"},
+    "ckb": {
+        "ckb-IR",
+        "ckb-IQ",
     },
-    'cy': {'cy-GB'},
-    'da': {
-        'da-DK',
-        'da-GL',
+    "cy": {"cy-GB"},
+    "da": {
+        "da-DK",
+        "da-GL",
     },
-    'de': {
-        'de-AT',
-        'de-DE',
-        'de-BE',
-        'de-LI',
-        'de-CH',
-        'de-LU',
+    "de": {
+        "de-AT",
+        "de-DE",
+        "de-BE",
+        "de-LI",
+        "de-CH",
+        "de-LU",
     },
-    'el': {
-        'el-CY',
-        'el-GR',
+    "el": {
+        "el-CY",
+        "el-GR",
     },
-    'en': {
-        'en-SG',
-        'en-PR',
-        'en-NZ',
-        'en-GM',
-        'en-PH',
-        'en-GB',
-        'en-RW',
-        'en-NI',
-        'en-IO',
-        'en-IN',
-        'en-CA',
-        'en-SC',
-        'en-TT',
-        'en-GY',
-        'en-MK',
-        'en-FI',
-        'en-ZA',
-        'en-BZ',
-        'en-NR',
-        'en-MO',
-        'en-KE',
-        'en-VG',
-        'en-MT',
-        'en-TZ',
-        'en-TK',
-        'en-BE',
-        'en-IE',
-        'en-NG',
-        'en-SH',
-        'en-GH',
-        'en-HK',
-        'en-BA',
-        'en-MU',
-        'en-US',
-        'en-VI',
-        'en-LC',
-        'en-JE',
-        'en-AU',
-        'en-PK',
-        'en-JM',
-        'en-NF',
-        'en-ZW',
-        'en-BW',
-        'en-AG',
+    "en": {
+        "en-SG",
+        "en-PR",
+        "en-NZ",
+        "en-GM",
+        "en-PH",
+        "en-GB",
+        "en-RW",
+        "en-NI",
+        "en-IO",
+        "en-IN",
+        "en-CA",
+        "en-SC",
+        "en-TT",
+        "en-GY",
+        "en-MK",
+        "en-FI",
+        "en-ZA",
+        "en-BZ",
+        "en-NR",
+        "en-MO",
+        "en-KE",
+        "en-VG",
+        "en-MT",
+        "en-TZ",
+        "en-TK",
+        "en-BE",
+        "en-IE",
+        "en-NG",
+        "en-SH",
+        "en-GH",
+        "en-HK",
+        "en-BA",
+        "en-MU",
+        "en-US",
+        "en-VI",
+        "en-LC",
+        "en-JE",
+        "en-AU",
+        "en-PK",
+        "en-JM",
+        "en-NF",
+        "en-ZW",
+        "en-BW",
+        "en-AG",
     },
-    'es': {
-        'es-PY',
-        'es-SV',
-        'es-NI',
-        'es-CV',
-        'es-HN',
-        'es-PE',
-        'es-MX',
-        'es-DO',
-        'es-VE',
-        'es-EC',
-        'es-AR',
-        'es-BO',
-        'es-CR',
-        'es-CL',
-        'es-ES',
-        'es-UY',
-        'es-CO',
-        'es-PA',
-        'es-GT',
-        'es-PR',
-        'es-CU',
-        'es-US',
+    "es": {
+        "es-PY",
+        "es-SV",
+        "es-NI",
+        "es-CV",
+        "es-HN",
+        "es-PE",
+        "es-MX",
+        "es-DO",
+        "es-VE",
+        "es-EC",
+        "es-AR",
+        "es-BO",
+        "es-CR",
+        "es-CL",
+        "es-ES",
+        "es-UY",
+        "es-CO",
+        "es-PA",
+        "es-GT",
+        "es-PR",
+        "es-CU",
+        "es-US",
     },
-    'et': {'et-EE'},
-    'eu': {'eu-ES'},
-    'fa': {'fa-IR'},
-    'fi': {'fi-FI'},
-    'fil': {
-        'fil-PH',
-        'tl-PH',
+    "et": {"et-EE"},
+    "eu": {"eu-ES"},
+    "fa": {"fa-IR"},
+    "fi": {"fi-FI"},
+    "fil": {
+        "fil-PH",
+        "tl-PH",
     },
-    'fr': {
-        'fr-HT',
-        'fr-CI',
-        'fr-MA',
-        'fr-FR',
-        'fr-VN',
-        'fr-BI',
-        'fr-SN',
-        'fr-RW',
-        'fr-GA',
-        'fr-SC',
-        'fr-CG',
-        'fr-NE',
-        'fr-GN',
-        'fr-LU',
-        'fr-TG',
-        'fr-DJ',
-        'fr-DZ',
-        'fr-MU',
-        'fr-RE',
-        'fr-MR',
-        'fr-BE',
-        'fr-TD',
-        'fr-CD',
-        'fr-CF',
-        'fr-CH',
-        'fr-CA',
+    "fr": {
+        "fr-HT",
+        "fr-CI",
+        "fr-MA",
+        "fr-FR",
+        "fr-VN",
+        "fr-BI",
+        "fr-SN",
+        "fr-RW",
+        "fr-GA",
+        "fr-SC",
+        "fr-CG",
+        "fr-NE",
+        "fr-GN",
+        "fr-LU",
+        "fr-TG",
+        "fr-DJ",
+        "fr-DZ",
+        "fr-MU",
+        "fr-RE",
+        "fr-MR",
+        "fr-BE",
+        "fr-TD",
+        "fr-CD",
+        "fr-CF",
+        "fr-CH",
+        "fr-CA",
     },
-    'gl': {'gl-ES'},
-    'gu': {'gu-IN'},
-    'he': {
-        'he-IL',
-        'iw-IL',
+    "gl": {"gl-ES"},
+    "gu": {"gu-IN"},
+    "he": {
+        "he-IL",
+        "iw-IL",
     },
-    'hi': {'hi-IN'},
-    'hr': {'hr-HR'},
-    'hu': {'hu-HU'},
-    'hy': {'hy-AM'},
-    'id': {'id-ID'},
-    'is': {'is-IS'},
-    'it': {
-        'it-IT',
-        'it-CH',
-        'it-VA',
-        'it-SM',
+    "hi": {"hi-IN"},
+    "hr": {"hr-HR"},
+    "hu": {"hu-HU"},
+    "hy": {"hy-AM"},
+    "id": {"id-ID"},
+    "is": {"is-IS"},
+    "it": {
+        "it-IT",
+        "it-CH",
+        "it-VA",
+        "it-SM",
     },
-    'ja': {'ja-JP'},
-    'jv': {
-        'jv-ID',
-        'jw-ID',
+    "ja": {"ja-JP"},
+    "jv": {
+        "jv-ID",
+        "jw-ID",
     },
-    'ka': {'ka-GE'},
-    'kk': {'kk-KZ'},
-    'km': {'km-KH'},
-    'kn': {'kn-IN'},
-    'ko': {'ko-KR'},
-    'ku': {'ku-TR'},
-    'ky': {'ky-KG'},
-    'la': {'la-VA'},
-    'lb': {'lb-LU'},
-    'lo': {'lo-LA'},
-    'lt': {'lt-LT'},
-    'lv': {'lv-LV'},
-    'mi': {'mi-NZ'},
-    'mk': {'mk-MK'},
-    'ml': {'ml-IN'},
-    'mn': {'mn-MN'},
-    'mr': {'mr-IN'},
-    'ms': {'ms-MY'},
-    'mt': {'mt-MT'},
-    'my': {'my-MM'},
-    'ne': {'ne-NP'},
-    'nl': {
-        'nl-NL',
-        'nl-BE',
+    "ka": {"ka-GE"},
+    "kk": {"kk-KZ"},
+    "km": {"km-KH"},
+    "kn": {"kn-IN"},
+    "ko": {"ko-KR"},
+    "ku": {"ku-TR"},
+    "ky": {"ky-KG"},
+    "la": {"la-VA"},
+    "lb": {"lb-LU"},
+    "lo": {"lo-LA"},
+    "lt": {"lt-LT"},
+    "lv": {"lv-LV"},
+    "mi": {"mi-NZ"},
+    "mk": {"mk-MK"},
+    "ml": {"ml-IN"},
+    "mn": {"mn-MN"},
+    "mr": {"mr-IN"},
+    "ms": {"ms-MY"},
+    "mt": {"mt-MT"},
+    "my": {"my-MM"},
+    "ne": {"ne-NP"},
+    "nl": {
+        "nl-NL",
+        "nl-BE",
     },
-    'no': {'no-NO'},
-    'ps': {'ps-AF'},
-    'pa': {
-        'pa-IN',
-        'pa-PK',
-        'pa-Guru-IN',
+    "no": {"no-NO"},
+    "ps": {"ps-AF"},
+    "pa": {
+        "pa-IN",
+        "pa-PK",
+        "pa-Guru-IN",
     },
-    'pl': {'pl-PL'},
-    'pt': {
-        'pt-MZ',
-        'pt-PT',
-        'pt-TL',
-        'pt-GW',
-        'pt-CV',
-        'pt-AO',
-        'pt-MO',
-        'pt-BR',
+    "pl": {"pl-PL"},
+    "pt": {
+        "pt-MZ",
+        "pt-PT",
+        "pt-TL",
+        "pt-GW",
+        "pt-CV",
+        "pt-AO",
+        "pt-MO",
+        "pt-BR",
     },
-    'ro': {
-        'ro-MD',
-        'ro-RO',
+    "ro": {
+        "ro-MD",
+        "ro-RO",
     },
-    'ru': {
-        'ru-KZ',
-        'ru-RU',
-        'ru-BY',
+    "ru": {
+        "ru-KZ",
+        "ru-RU",
+        "ru-BY",
     },
-    'rw': {'rw-RW'},
-    'si': {'si-LK'},
-    'sk': {'sk-SK'},
-    'sl': {'sl-SI'},
-    'so': {
-        'so-UG',
-        'so-KE',
-        'so-DJ',
-        'so-SO',
-        'so-ET',
+    "rw": {"rw-RW"},
+    "si": {"si-LK"},
+    "sk": {"sk-SK"},
+    "sl": {"sl-SI"},
+    "so": {
+        "so-UG",
+        "so-KE",
+        "so-DJ",
+        "so-SO",
+        "so-ET",
     },
-    'sq': {'sq-AL'},
-    'sr': {
-        'sr-BA',
-        'sr-CY',
-        'sr-RS',
+    "sq": {"sq-AL"},
+    "sr": {
+        "sr-BA",
+        "sr-CY",
+        "sr-RS",
     },
-    'ss': {'ss-Latn-ZA'},
-    'st': {'st-ZA'},
-    'su': {'su-ID'},
-    'sv': {
-        'sv-FI',
-        'sv-SE',
+    "ss": {"ss-Latn-ZA"},
+    "st": {"st-ZA"},
+    "su": {"su-ID"},
+    "sv": {
+        "sv-FI",
+        "sv-SE",
     },
-    'sw': {
-        'sw-TZ',
-        'sw-KE',
+    "sw": {
+        "sw-TZ",
+        "sw-KE",
     },
-    'ta': {
-        'ta-MY',
-        'ta-SG',
-        'ta-IN',
-        'ta-LK',
+    "ta": {
+        "ta-MY",
+        "ta-SG",
+        "ta-IN",
+        "ta-LK",
     },
-    'te': {'te-IN'},
-    'th': {'th-TH'},
-    'tn': {'tn-Latn-ZA'},
-    'tr': {'tr-TR'},
-    'ts': {'ts-ZA'},
-    'uk': {'uk-UA'},
-    'ur': {
-        'ur-PK',
-        'ur-IN',
+    "te": {"te-IN"},
+    "th": {"th-TH"},
+    "tn": {"tn-Latn-ZA"},
+    "tr": {"tr-TR"},
+    "ts": {"ts-ZA"},
+    "uk": {"uk-UA"},
+    "ur": {
+        "ur-PK",
+        "ur-IN",
     },
-    'uz': {'uz-UZ'},
-    've': {'ve-ZA'},
-    'vi': {'vi-VN'},
-    'xh': {'xh-ZA'},
-    'yi': {'yi-US'},
-    'yue': {'yue-Hant-HK'},
-    'zh': {
-        'zh-CN',
-        'zh-SG',
-        'zh-TW',
-        'zh-HK',
+    "uz": {"uz-UZ"},
+    "ve": {"ve-ZA"},
+    "vi": {"vi-VN"},
+    "xh": {"xh-ZA"},
+    "yi": {"yi-US"},
+    "yue": {"yue-Hant-HK"},
+    "zh": {
+        "zh-CN",
+        "zh-SG",
+        "zh-TW",
+        "zh-HK",
     },
-    'zu': {'zu-ZA'},
+    "zu": {"zu-ZA"},
 }
 
 
@@ -836,7 +835,7 @@ class LanguageCode(Enum):
     zh_TW = "zh-TW"  # Chinese (Taiwan)
     zu_ZA = "zu-ZA"  # Zulu (South Africa)
 
-    ValueType = NewType('ValueType', str)
+    ValueType = NewType("ValueType", str)
 
     @classmethod
     def _missing_(cls, value: object) -> Enum:
@@ -844,20 +843,20 @@ class LanguageCode(Enum):
             raise ValueError(f"Cannot instantiate '{cls.__name__}' from value '{value}'. Expect a string.")
 
         value_str: str = str(value)
-        value_str = value_str.replace('_', '-')
+        value_str = value_str.replace("_", "-")
         try:
-            value_list: List[str] = value_str.split("-")
+            value_list: list[str] = value_str.split("-")
             value_list[-1] = value_list[-1].upper()  # cases like e.g. en-gb
             if len(value_list) == 3:
                 value_list[1][0].upper() + value_list[1][1:]  # cases like e.g., yue_Hant_HK = "yue-Hant-HK"
-            value_str = '-'.join(value_list)
+            value_str = "-".join(value_list)
             instance: Enum = cls(value_str)
             return instance
         except Exception:
             raise ValueError(f"Could not instantiate '{cls.__name__}' from value '{value}'.")
 
     @staticmethod
-    def from_list(language_as_list: List[str], sort_values: bool = True) -> List['LanguageCode']:
+    def from_list(language_as_list: list[str], sort_values: bool = True) -> list[LanguageCode]:
         if sort_values:
             return [LanguageCode(language) for language in sorted(language_as_list)]
         else:
@@ -866,29 +865,29 @@ class LanguageCode(Enum):
     @classmethod
     def intersect_sets(
         cls,
-        set1: Set['LanguageCode'],
-        set2: Set['LanguageCode'],
-    ) -> Set['LanguageCode']:
-        extended_set1: Set['LanguageCode'] = cls.extend_set(set1)
-        extended_set2: Set['LanguageCode'] = cls.extend_set(set2)
-        intersected_set: Set['LanguageCode'] = extended_set1.intersection(extended_set2)
+        set1: set[LanguageCode],
+        set2: set[LanguageCode],
+    ) -> set[LanguageCode]:
+        extended_set1: set[LanguageCode] = cls.extend_set(set1)
+        extended_set2: set[LanguageCode] = cls.extend_set(set2)
+        intersected_set: set[LanguageCode] = extended_set1.intersection(extended_set2)
         return cls.compress_set(intersected_set)
 
     @classmethod
-    def extend_set(cls, lang_set: Set['LanguageCode']) -> Set['LanguageCode']:
+    def extend_set(cls, lang_set: set[LanguageCode]) -> set[LanguageCode]:
         if cls.multi in lang_set:
             return cls.get_all_languages_set()
         return lang_set
 
     @classmethod
-    def compress_set(cls, lang_set: Set['LanguageCode']) -> Set['LanguageCode']:
+    def compress_set(cls, lang_set: set[LanguageCode]) -> set[LanguageCode]:
         if lang_set == cls.get_all_languages_set():
             return {cls.multi}
         return lang_set
 
     @classmethod
-    def get_all_languages_set(cls) -> Set['LanguageCode']:
-        all_languages_set: Set['LanguageCode'] = set([lang for lang in cls])
+    def get_all_languages_set(cls) -> set[LanguageCode]:
+        all_languages_set: set[LanguageCode] = set(cls)
         all_languages_set.remove(cls.multi)
         return all_languages_set
 
@@ -908,15 +907,15 @@ class LanguageCode(Enum):
             bool: whether lang is a LanguageCode
         """
         if not lang:
-            err_msg = f'{lang} expected to be of type LanguageCode. Obtained type {type(lang)}'
-            log.error(err_msg)
+            err_msg = f"{lang} expected to be of type LanguageCode. Obtained type {type(lang)}"
+            logger.error(err_msg)
             if raise_exception:
                 raise NotALanguageError(err_msg)
 
         is_component_language: bool = isinstance(lang, LanguageCode)
         if not is_component_language:
-            err_msg = f'{lang} expected to be of type LanguageCode. Obtained type {type(lang)}'
-            log.error(err_msg)
+            err_msg = f"{lang} expected to be of type LanguageCode. Obtained type {type(lang)}"
+            logger.error(err_msg)
             if raise_exception:
                 raise NotALanguageError(err_msg)
 
@@ -925,25 +924,24 @@ class LanguageCode(Enum):
     def get_language_str(self) -> str:
         """Get the full (lower case) name of the language, e.g. 'english' for LanguageCode.en_US."""
         try:
-            language: Optional[Language] = Language.get(self.value)
+            language: Language | None = Language.get(self.value)
             assert language
             assert language.language
             language_str: str = language.language
             assert language_str is not None
             return language_str.lower()
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_language(self) -> Language:
         """Get the full (lower case) name of the language, e.g. 'english' for LanguageCode.en_US."""
         try:
-
-            language: Optional[Language] = Language.get(self.value)
+            language: Language | None = Language.get(self.value)
             assert language
             return language
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_long_name(self) -> str:
@@ -952,12 +950,12 @@ class LanguageCode(Enum):
         Note: this is also the name used by NLTK to identify a language.
         """
         try:
-            language: Optional[Language] = Language.get(self.value)
+            language: Language | None = Language.get(self.value)
             assert language
             language_name: str = language.language_name().lower()
             return language_name
         except Exception as e:
-            log.error(e)
+            logger.error(e)
             raise e
 
     def get_locale(self) -> str:
@@ -968,23 +966,23 @@ class LanguageCode(Enum):
 
     @staticmethod
     @lru_cache(maxsize=3000)
-    def get_locales(language_code_str: str) -> Set['LanguageCode']:
-        language_locales: Set[str] = LANGUAGE_TO_LOCALES_DICT.get(language_code_str, {'en_US'})
-        language_codes: Set['LanguageCode'] = {LanguageCode(language_locale) for language_locale in language_locales}
+    def get_locales(language_code_str: str) -> set[LanguageCode]:
+        language_locales: set[str] = LANGUAGE_TO_LOCALES_DICT.get(language_code_str, {"en_US"})
+        language_codes: set[LanguageCode] = {LanguageCode(language_locale) for language_locale in language_locales}
         return language_codes
 
     def get_locale_utf(self) -> str:
         # Note: needs to be aligned with linux 'locales' support installed in dockerfiles/ondewo-cai.Dockerfile
         # Locales linux language support: 'dpkg-reconfigure locales' to see available languages
         # Fetch the locale corresponding to the current language code
-        return LOCALES_DICT.get(self.name, 'en_US.utf8')  # Default to 'en_US.utf8' if not found
+        return LOCALES_DICT.get(self.name, "en_US.utf8")  # Default to 'en_US.utf8' if not found
 
     def get_value(self) -> str:
         return self.value  # type: ignore
 
 
 # Create the LANGUAGE_TO_LOCALES_DICT
-DEFAULT_LANGUAGES: List['LanguageCode'] = [
+DEFAULT_LANGUAGES: list[LanguageCode] = [
     LanguageCode.de_DE,
     LanguageCode.en_US,
 ]

@@ -14,13 +14,10 @@
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from bs4 import BeautifulSoup
-from ondewo.logging.logger import logger_console as log
+from loguru import logger
 from requests import get
 
 from ondewo_nlu_webhook_server.server.base_models import (
@@ -29,162 +26,114 @@ from ondewo_nlu_webhook_server.server.base_models import (
 )
 
 
-def add_text_to_fulfillment(fulfillment_messages: List[Dict[str, Any]], text: str) -> List[Dict[str, Any]]:
-    """
-    add an entry to the text section of the fulfillment messages
-    if no text entries are in the messages, a text entry with the desired text will be created
+def add_text_to_fulfillment(fulfillment_messages: list[dict[str, Any]], text: str) -> list[dict[str, Any]]:
+    """Add an entry to the text section of the fulfillment messages.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): list of fulfillment messages
-        text (str): text to add to the text section of the fulfillment messages
+        fulfillment_messages: list of fulfillment messages
+        text: text to add to the text section of the fulfillment messages
 
     Returns:
         list of fulfillment messages with new text added
     """
     if check_if_text_response_exist(fulfillment_messages):
-        idx = get_index_of_text_entry(fulfillment_messages)
+        idx: int = get_index_of_text_entry(fulfillment_messages)
         fulfillment_messages[idx]["text"]["text"].append(text)
         return fulfillment_messages
-    else:
-        return _append_message_to_fulfillment(fulfillment_messages, text)
+    return _append_message_to_fulfillment(fulfillment_messages, text)
 
 
-def check_if_text_response_exist(fulfillment_messages: List[Dict[str, Any]]) -> bool:
-    """
-    Checks if a text response exists in the provided fulfillment messages.
-
-    This function examines a list of fulfillment messages (commonly from a chatbot or
-    messaging platform) and determines whether any of the messages contain a "text"
-    field with content.
+def check_if_text_response_exist(fulfillment_messages: list[dict[str, Any]]) -> bool:
+    """Check if a text response exists in the provided fulfillment messages.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): A list of fulfillment messages,
-        where each message is a dictionary that may contain a "text" key.
+        fulfillment_messages: A list of fulfillment messages.
 
     Returns:
-        bool: True if any message contains a "text" field with content,
-        otherwise False.
+        True if any message contains a "text" field with content, otherwise False.
     """
-    if len(fulfillment_messages) >= 1:
-        if any("text" in message.keys() for message in fulfillment_messages):
-            for message in fulfillment_messages:
-                if "text" in message.keys():
-                    break
-            if "text" in message["text"].keys():  # type: ignore
-                return True
+    if len(fulfillment_messages) >= 1 and any("text" in message for message in fulfillment_messages):
+        message_with_text: dict[str, Any] | None = None
+        for message in fulfillment_messages:  # pragma: no branch
+            if "text" in message:
+                message_with_text = message
+                break
+        if message_with_text and "text" in message_with_text["text"]:
+            return True
     return False
 
 
 def override_fulfillment_with_text(
-    fulfillment_messages: List[Dict[str, Any]], text: str,
-) -> List[Dict[str, Any]]:
-    """
-    Overrides the current text in the fulfillment messages with the given text string.
-
-    This function checks if the fulfillment messages already contain a "text" entry. If so,
-    it updates the content of the first "text" field with the provided `text` value.
-    If no "text" entry is found, it appends a new message with the given text.
+    fulfillment_messages: list[dict[str, Any]],
+    text: str,
+) -> list[dict[str, Any]]:
+    """Override the current text in the fulfillment messages with the given text string.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): A list of fulfillment messages, where
-            each message may contain various fields, including a "text" field.
-        text (str): The new text to set in the fulfillment message's "text" field.
+        fulfillment_messages: A list of fulfillment messages.
+        text: The new text to set in the fulfillment message's "text" field.
 
     Returns:
-        List[Dict[str, Any]]: The updated list of fulfillment messages, with the "text" field
-        overridden or appended based on the current state of the messages.
+        The updated list of fulfillment messages.
     """
     if check_if_text_response_exist(fulfillment_messages):
-        idx = get_index_of_text_entry(fulfillment_messages)
+        idx: int = get_index_of_text_entry(fulfillment_messages)
         fulfillment_messages[idx]["text"]["text"] = [text]
         return fulfillment_messages
-    else:
-        return _append_message_to_fulfillment(fulfillment_messages, text)
+    return _append_message_to_fulfillment(fulfillment_messages, text)
 
 
 def _append_message_to_fulfillment(
-    fulfillment_messages: List[Dict[str, Any]],
+    fulfillment_messages: list[dict[str, Any]],
     text: str,
-) -> List[Dict[str, Any]]:
-    """
-    Appends a new text message to the list of fulfillment messages.
-
-    This function adds a new message with the provided text to the `fulfillment_messages` list.
-    It does not check for existing "text" messages and does not override any existing messages.
-    A new message will always be appended.
-
-    **Important**: This function should not be used directly without ensuring that the
-    `check_if_text_response_exist()` function has been called beforehand to confirm that
-    appending a new message is the desired behavior.
+) -> list[dict[str, Any]]:
+    """Append a new text message to the list of fulfillment messages.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): A list of fulfillment messages,
-            where each message may contain different fields such as "text", "payload", etc.
-        text (str): The new text to append as a message to the `fulfillment_messages` list.
+        fulfillment_messages: A list of fulfillment messages.
+        text: The new text to append as a message.
 
     Returns:
-        List[Dict[str, Any]]: The updated list of fulfillment messages with the new text message appended.
-
-    Notes:
-        - **DO NOT** use this function directly without verifying the existence of a "text" response
-          using `check_if_text_response_exist()`. This function does not prevent appending multiple
-          "text" messages.
-        - This function will **not** modify or override any existing "text" entries in the messages.
-        - It is primarily for use cases where appending a new text message is necessary without
-          considering existing "text" messages.
+        The updated list of fulfillment messages with the new text message appended.
     """
     fulfillment_messages.append({"text": {"text": [text]}})
     return fulfillment_messages
 
 
-def get_index_of_text_entry(fulfillment_messages: List[Dict[str, Any]]) -> int:
-    """
-    Searches for the index of the first message containing a "text" field in the
-    given list of fulfillment messages.
-
-    This function iterates through the `fulfillment_messages` list and returns the index
-    of the first entry that contains a "text" field. If no such message is found,
-    it raises a `ValueError`.
+def get_index_of_text_entry(fulfillment_messages: list[dict[str, Any]]) -> int:
+    """Search for the index of the first message containing a "text" field.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): A list of dictionaries representing
-            the fulfillment messages. Each message may contain various fields, and this
-            function looks for the "text" field specifically.
+        fulfillment_messages: A list of dictionaries representing the fulfillment messages.
 
     Returns:
-        int: The index of the first message containing the "text" field.
+        The index of the first message containing the "text" field.
 
     Raises:
         ValueError: If no message containing a "text" field is found in the list.
     """
     for idx, entry in enumerate(fulfillment_messages):
-        if "text" in entry.keys():
+        if "text" in entry:
             return idx
-    raise ValueError(f"Could not find text entries! messages: {str(fulfillment_messages)}")
+    raise ValueError(f"Could not find text entries! messages: {fulfillment_messages!s}")
 
 
 def create_new_context_name(
-    active_contexts: List[Context],
+    active_contexts: list[Context],
     context_name: str,
-    project_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    project_id: str | None = None,
+    session_id: str | None = None,
 ) -> str:
-    """
-    Creates a compatible context name from the given string by either extracting the correct project
-    and session IDs from an active context, or by constructing it from the provided input.
+    """Create a compatible context name from the given string.
 
     Args:
-        active_contexts (List[Context]): A list of active contexts. If provided, the function will
-            extract the project and session IDs from the first context in the list.
-        context_name (str): The name of the new context (e.g., "my-context-999").
-        project_id (Optional[str]): The project ID to use if there are no active contexts.
-            If not provided and no active contexts exist, this must be supplied.
-        session_id (Optional[str]): The session ID to use if there are no active contexts.
-            If not provided and no active contexts exist, this must be supplied.
+        active_contexts: A list of active contexts.
+        context_name: The name of the new context.
+        project_id: The project ID to use if there are no active contexts.
+        session_id: The session ID to use if there are no active contexts.
 
     Returns:
-        str: A string representing the compatible context name in the format:
-            "projects/<PROJECT-ID>/agent/sessions/<SESSION-ID>/contexts/<context_name>"
+        A string representing the compatible context name.
 
     Raises:
         ValueError: If neither active contexts nor both project_id and session_id are provided.
@@ -195,7 +144,7 @@ def create_new_context_name(
                 "If no project ID and session ID are provided, at least one active context is needed "
                 + "to extract project and session IDs",
             )
-        some_context_name = active_contexts[0].name
+        some_context_name: str = active_contexts[0].name
         project_id = some_context_name.split("projects/")[1].split("/agent")[0]
         session_id = some_context_name.split("sessions/")[1].split("/active_contexts")[0]
 
@@ -203,111 +152,96 @@ def create_new_context_name(
 
 
 def replace_placeholder_in_text(
-    fulfillment_messages: List[Dict[str, Any]],
+    fulfillment_messages: list[dict[str, Any]],
     replace_text: str,
     active_intent: Intent,
-    parameters: Optional[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
-    """
-    Replaces the placeholder '<>' in the 'text' field of fulfillment messages with the provided ID value.
-
-    This function searches for a placeholder (`<>`) in the text field of the fulfillment messages
-    and replaces it with the provided `replace_text`. If the placeholder is not found, the list
-    of fulfillment messages is returned without modification. The function supports optional
-    parameters, including `active_intent` and additional context in `parameters`.
+    parameters: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Replace the placeholder '<>' in the 'text' field of fulfillment messages.
 
     Args:
-        fulfillment_messages (List[Dict[str, Any]]): A list of fulfillment messages.
-            Each message can contain various fields, including "text".
-        replace_text (str): The value to replace the placeholder (`<>`) in the text message.
-        active_intent (Intent): The current intent associated with the request, which may
-            influence how the placeholder is replaced.
-        parameters (Optional[Dict[str, Any]], optional): Additional context or parameters
-            that may be used during the placeholder replacement (default is None).
+        fulfillment_messages: A list of fulfillment messages.
+        replace_text: The value to replace the placeholder in the text message.
+        active_intent: The current intent associated with the request.
+        parameters: Additional context or parameters.
 
     Returns:
-        List[Dict[str, Any]]: The updated list of fulfillment messages with the placeholder replaced.
-
+        The updated list of fulfillment messages with the placeholder replaced.
     """
     for message in fulfillment_messages:
         if "text" in message and "text" in message["text"]:
             for i, message_text in enumerate(message["text"]["text"]):
                 if "<" in message_text and ">" in message_text:
-
-                    # Default Welcome Intent
                     if active_intent.displayName == "Default Welcome Intent":
                         message["text"]["text"][i] = message_text.replace("<organization_name>", replace_text)
 
-                    elif active_intent.displayName in ["i.example_webrequest"]:  # TODO: Example Intent, use yours
+                    elif active_intent.displayName in ["i.example_webrequest"]:
                         url: str = "https://www.myurl.com/my-page"
-                        data = extract_price(url)
+                        data: dict[str, list[dict[str, str]]] = extract_price(url)
                         assert parameters
-                        parameter_type: str = parameters['MyEntityType'][0]  # TODO: example entity type, use yours
+                        parameter_type: str = parameters["MyEntityType"][0]
                         price: str
-                        if parameter_type == "parameter1":  # TODO: example parameter, use yours
-                            price = next(
+                        if parameter_type == "parameter1":
+                            price_match: str | None = next(
                                 (
-                                    item["price"] for item in data['my-product-1'] if  # type: ignore
-                                    "my-product-category" in item["category"]
-                                ), None,
-                            )[:-2]
+                                    item["price"]
+                                    for item in data["my-product-1"]
+                                    if "my-product-category" in item["category"]
+                                ),
+                                None,
+                            )
+                            assert price_match is not None
+                            price = price_match[:-2]
                         else:
-                            price = next(
+                            price_match_2: str | None = next(
                                 (
-                                    item["price"] for item in data['my-product-2'] if  # type: ignore
-                                    "my-product-category" in item["category"]
-                                ), None,
-                            )[:-2]
+                                    item["price"]
+                                    for item in data["my-product-2"]
+                                    if "my-product-category" in item["category"]
+                                ),
+                                None,
+                            )
+                            assert price_match_2 is not None
+                            price = price_match_2[:-2]
 
                         assert price is not None
-                        # replace with correct price based on TypeOfVehicle
                         message["text"]["text"][i] = message_text.replace(replace_text, price)
 
                     else:
-                        log.debug("Nothing to replace.")
+                        logger.debug("Nothing to replace.")
 
     return fulfillment_messages
 
 
-def extract_price(url: str) -> Dict[str, List[Dict[str, str]]]:
-    """
-    Extracts price information from a webpage containing a structured HTML table.
-
-    This function fetches the webpage from the provided URL, parses it using BeautifulSoup,
-    and extracts price-related data from a specific table. The extracted data includes
-    categories, prices, and optional notes.
+def extract_price(url: str) -> dict[str, list[dict[str, str]]]:
+    """Extract price information from a webpage containing a structured HTML table.
 
     Args:
-        url (str): The URL of the webpage containing the price table.
+        url: The URL of the webpage containing the price table.
 
     Returns:
-        Dict[str, List[Dict[str, str]]]: A dictionary containing a list of extracted price entries.
-        Each entry is a dictionary with the following keys:
-            - "category" (str): The category name from the first column.
-            - "price" (str): The price from the second column.
+        A dictionary containing a list of extracted price entries.
 
     Raises:
         requests.exceptions.RequestException: If there is an issue with the HTTP request.
         AssertionError: If the expected table or rows are not found in the HTML.
     """
-    response = get(url)
-    response.raise_for_status()  # Ensure the request was successful
+    response = get(url, timeout=30)
+    response.raise_for_status()
 
     soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
 
-    # Find the table containing the data
     table = soup.find("div", class_="table-box").find("table", class_="table")  # type: ignore
     assert table is not None
-    rows = table.find_all("tr", class_="tablerow")  # type:ignore
+    rows = table.find_all("tr", class_="tablerow")  # type: ignore
     assert rows is not None
 
-    values: List = []
-    # Parse the rows for data
+    values: list[dict[str, str]] = []
     for row in rows:
         cells = row.find_all("td")
         if len(cells) >= 2:
-            category = cells[0].get_text(strip=True)
-            price = cells[1].get_text(strip=True)
+            category: str = cells[0].get_text(strip=True)
+            price: str = cells[1].get_text(strip=True)
             values.append(
                 {
                     "category": category,

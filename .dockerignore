@@ -22,8 +22,10 @@ ondewo-devops-accounts
 .idea
 .vim
 
-# C extensions
-*.so
+# C extensions and Cython build artifacts
+**/*.so
+**/*.c
+!setup.cfg
 
 # Distribution / packaging
 .Python

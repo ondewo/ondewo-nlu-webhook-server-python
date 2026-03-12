@@ -1,20 +1,134 @@
 {
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.rulers": [
+      120
+    ],
+    "editor.tabSize": 4
+  },
+  "black-formatter.args": [
+    "--line-length=120",
+    "--preview"
+  ],
+  "breadcrumbs.enabled": true,
+  "coverage-gutters.coverageFileNames": [
+    "coverage.xml",
+    "coverage/coverage.xml",
+    ".coverage"
+  ],
+  "coverage-gutters.showLineCoverage": true,
+  "coverage-gutters.showRulerCoverage": true,
+  "cursorpyright.analysis.autoImportCompletions": true,
+  "cursorpyright.analysis.diagnosticMode": "workspace",
+  "cursorpyright.analysis.extraPaths": [
+    "${workspaceFolder}/ondewo_nlu_webhook_server",
+    "${workspaceFolder}/ondewo_nlu_webhook_server_custom_integration"
+  ],
+  "cursorpyright.analysis.inlayHints.functionReturnTypes": true,
+  "cursorpyright.analysis.inlayHints.variableTypes": true,
+  "cursorpyright.analysis.typeCheckingMode": "strict",
+  "editor.formatOnPaste": false,
   "editor.formatOnSave": true,
-  "python.autoComplete.extraPaths": [
-    "./ondewo_nlu_webhook_server",
-    "./ondewo_nlu_webhook_server_custom_integration",
-    "./tests"
+  "editor.formatOnType": false,
+  "editor.trimAutoWhitespace": true,
+  "files.associations": {
+    "*.py": "python",
+    "*.pyi": "python",
+    ".cursorrules": "markdown"
+  },
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.exclude": {
+    "**/*.c": true,
+    "**/*.egg-info": true,
+    "**/*.pyc": true,
+    "**/*.pyo": true,
+    "**/*.so": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/__pycache__": true,
+    ".docker": true
+  },
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "files.watcherExclude": {
+    "**/*.egg-info/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.ruff_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/build/**": true,
+    "**/dist/**": true
+  },
+  "git.ignoreLimitWarning": true,
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  "mypy-type-checker.args": [
+    "--config-file=pyproject.toml",
+    "--python-version=3.14"
   ],
-  "python.envFile": "${workspaceFolder}/envs/local.env",
-  "python.formatting.autopep8Path": "autopep8",
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "problems.autoReveal": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/ondewo_nlu_webhook_server",
+    "${workspaceFolder}/ondewo_nlu_webhook_server_custom_integration"
+  ],
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.pytestParameters": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.typeCheckingMode": "strict",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.languageServer": "None",
   "python.linting.enabled": true,
-  "python.linting.flake8Args": [
-    "--config=${workspaceFolder}/dockerfiles/code_checks/.flake8"
+  "python.linting.mypyArgs": [
+    "--config-file=pyproject.toml",
+    "--python-version=3.14"
   ],
-  "python.linting.flake8Enabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "python.terminal.activateEnvironment": true,
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}",
   "python.testing.pytestArgs": [
     "tests"
   ],
   "python.testing.pytestEnabled": true,
-  "python.testing.unittestEnabled": false
+  "python.testing.unittestEnabled": false,
+  "ruff.enable": true,
+  "ruff.fixAll": true,
+  "ruff.format.args": [
+    "--line-length=120"
+  ],
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.lint.args": [
+    "--line-length=120"
+  ],
+  "ruff.lint.enable": true,
+  "ruff.organizeImports": true,
+  "search.exclude": {
+    "**/*.egg-info": true,
+    "**/.mypy_cache": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/__pycache__": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/uv.lock": true
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}"
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}"
+  }
 }

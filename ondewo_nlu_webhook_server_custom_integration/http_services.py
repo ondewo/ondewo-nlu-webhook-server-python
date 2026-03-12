@@ -14,8 +14,6 @@
 
 from typing import (
     Any,
-    Dict,
-    List,
     Optional,
     Union,
 )
@@ -27,10 +25,10 @@ from fastapi import HTTPException
 async def make_http_request(
     method: str,
     url: str,
-    headers: Dict[str, str],
-    params: Optional[Dict[str, Any]] = None,
-    json_payload: Optional[Dict[str, Union[str, int, float, bool, Dict, list]]] = None,
-) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    headers: dict[str, str],
+    params: dict[str, Any] | None = None,
+    json_payload: dict[str, str | int | float | bool | dict | list] | None = None,
+) -> dict[str, Any] | list[dict[str, Any]]:
     """
     Makes an asynchronous HTTP request using the specified method, URL, headers, and optional parameters or
     JSON payload.
@@ -73,7 +71,10 @@ async def make_http_request(
         elif method.lower() == "put":
             # PUT request with JSON payload, if applicable
             response = await client.put(
-                url, headers=headers, params=params, json=json_payload,
+                url,
+                headers=headers,
+                params=params,
+                json=json_payload,
             )
         else:
             # Raise an exception if an unsupported method is provided
@@ -83,11 +84,12 @@ async def make_http_request(
         if response.status_code in {200, 201}:
             try:
                 # Attempt to parse the response as JSON and return it
-                return response.json()  # type:ignore
+                return response.json()  # type: ignore
             except ValueError:
                 # Raise an exception if the response body is not valid JSON
                 raise HTTPException(
-                    status_code=500, detail="Invalid JSON response from server.",
+                    status_code=500,
+                    detail="Invalid JSON response from server.",
                 )
         else:
             # Raise an exception for unsuccessful responses, including the status code and server message

@@ -1,43 +1,119 @@
 {
   "build": {
     "args": {
-      "HOST_DOCKER_GID": "999",
-      "USERNAME": "${localEnv:USER}"
+      "USERID": "1000",
+      "USERNAME": "vscode"
     },
-    "context": "../.",
+    "context": ".",
     "dockerfile": "Dockerfile"
   },
-  "extensions": [
-    "donjayamanne.githistory",
-    "donjayamanne.python-environment-manager",
-    "eamodio.gitlens",
-    "esbenp.prettier-vscode",
-    "hbenl.vscode-test-explorer",
-    "markipad.vscode-test-adapter",
-    "mhutchie.git-graph",
-    "mikestead.dotenv",
-    "ms-azuretools.vscode-docker",
-    "ms-python.flake8",
-    "ms-python.pytest",
-    "ms-python.python-test-adapter",
-    "ms-python.python",
-    "ms-python.vscode-pylance",
-    "ms-toolsai.jupyter-renderers",
-    "ms-toolsai.jupyter",
-    "ms-vscode.test-adapter-converter"
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/github/ondewo-nlu-webhook-server-python",
+    "PYTHONUNBUFFERED": "1",
+    "UV_SYSTEM_PYTHON": "1"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "aaron-bond.better-comments",
+        "charliermarsh.ruff",
+        "davidanson.vscode-markdownlint",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "gruntfuggly.todo-tree",
+        "hbenl.vscode-test-explorer",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "ms-python.mypy-type-checker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode-remote.remote-containers",
+        "redhat.vscode-yaml",
+        "ryanluker.vscode-coverage-gutters",
+        "streetsidesoftware.code-spell-checker",
+        "tamasfe.even-better-toml",
+        "wayou.vscode-todo-highlight",
+        "yzhang.markdown-all-in-one"
+      ],
+      "settings": {
+        "[python]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          },
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        },
+        "black-formatter.args": [
+          "--line-length=120",
+          "--preview"
+        ],
+        "mypy-type-checker.args": [
+          "--config-file=pyproject.toml",
+          "--python-version=3.14"
+        ],
+        "mypy-type-checker.importStrategy": "fromEnvironment",
+        "python.analysis.extraPaths": [
+          "${workspaceFolder}/ondewo_nlu_webhook_server",
+          "${workspaceFolder}/ondewo_nlu_webhook_server_custom_integration"
+        ],
+        "python.analysis.typeCheckingMode": "strict",
+        "python.defaultInterpreterPath": "/usr/local/bin/python3.14",
+        "python.formatting.provider": "none",
+        "python.linting.enabled": true,
+        "python.linting.mypyEnabled": true,
+        "python.terminal.activateEnvInCurrentTerminal": false,
+        "python.terminal.activateEnvironment": false,
+        "python.testing.autoTestDiscoverOnSaveEnabled": true,
+        "python.testing.cwd": "${workspaceFolder}",
+        "python.testing.pytestArgs": [
+          "tests"
+        ],
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestPath": "pytest",
+        "python.testing.unittestEnabled": false,
+        "ruff.enable": true,
+        "ruff.format.args": [
+          "--line-length=120"
+        ],
+        "ruff.importStrategy": "fromEnvironment",
+        "ruff.lint.args": [
+          "--line-length=120"
+        ],
+        "ruff.lint.enable": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "features": {},
+  "forwardPorts": [
+    59001,
+    5678
   ],
   "mounts": [
-    "type=bind,source=${localWorkspaceFolder},target=/github/ondewo-nlu-webhook-server-python",
-    "type=bind,source=${localWorkspaceFolder}/.docker,target=/home/${localEnv:USER}/.docker,readonly=False",
-    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock,readonly=false"
+    "source=${localWorkspaceFolder},target=${containerWorkspaceFolder},type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
   ],
-  "name": "ondewo-nlu-webhook-server-python-dev-container",
-  "postCreateCommand": "make setup_developer_environment_in_devcontainer && jq 'del(.credsStore)' ~/.docker/config.json > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json",
-  "remoteUser": "${localEnv:USER}",
-  "settings": {
-    "editor.formatOnSave": true,
-    "python.defaultInterpreterPath": "/usr/local/bin/python",
-    "terminal.integrated.defaultProfile.linux": "bash"
+  "name": "ONDEWO NLU Webhook Server Python Dev Container",
+  "portsAttributes": {
+    "5678": {
+      "label": "Debug Port",
+      "onAutoForward": "silent"
+    },
+    "59001": {
+      "label": "Webhook Server",
+      "onAutoForward": "notify"
+    }
   },
+  "postCreateCommand": "bash -c 'make setup_developer_environment_in_devcontainer'",
+  "postStartCommand": "bash -c 'echo \"=== Dev Container Started ===\"; echo \"Workspace: ${containerWorkspaceFolder}\"; if [ -d \"${containerWorkspaceFolder}\" ]; then echo \"\u2713 Workspace directory exists\"; ls -la \"${containerWorkspaceFolder}\" | head -10; else echo \"\u2717 Workspace directory NOT found at ${containerWorkspaceFolder}\"; echo \"Checking common locations...\"; ls -la /workspaces 2>/dev/null || echo \"/workspaces does not exist\"; ls -la /workspace 2>/dev/null || echo \"/workspace does not exist\"; fi'",
+  "remoteUser": "vscode",
+  "runArgs": [],
+  "updateContentCommand": "echo 'Update content command'",
+  "waitFor": "postStartCommand",
   "workspaceFolder": "/github/ondewo-nlu-webhook-server-python"
 }

@@ -1,0 +1,328 @@
+# Workflow: Tests and Code Style Checks
+#
+# This workflow runs code style checks (ruff), unit tests, and e2e tests
+# on every push to the repository.
+#
+# For more information, see:
+# https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Tests and Code Style
+
+on:
+  push: # Trigger workflow on pushes to any branch
+  pull_request: # Trigger workflow on pull requests to any branch
+
+permissions:
+  contents: read # Allow read access to repository contents
+  checks: write # Allow writing check results (JUnit test reports)
+  pull-requests: write # Allow posting coverage comments on PRs
+
+jobs:
+  # Job: Code style checks
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14" # Specify Python version
+
+      # Step 3: Install uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      # Step 4: Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      # Step 5: Install dependencies
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e ".[dev]"
+
+      # Step 6: Run ruff linting check
+      - name: Run ruff linting check
+        run: |
+          ruff check .
+
+      # Step 7: Run ruff format check
+      - name: Run ruff format check
+        run: |
+          ruff format --check .
+
+  # Job: Run unit and integration tests
+  unit-tests:
+    needs: code-style
+    runs-on: ubuntu-latest
+    services:
+      docker: # Enable Docker service for running containerized tests
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14" # Specify Python version
+
+      # Step 3: Install uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      # Step 4: Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      # Step 5: Install dependencies
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e ".[dev]"
+
+      # Step 6: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 7: Create output directories for coverage and JUnit reports
+      - name: Create coverage and junit directories
+        run: mkdir -p coverage junit
+
+      # Step 8: Run unit and integration tests
+      - name: Run unit and integration tests
+        env:
+          DOCKER_HOST: tcp://docker:2375
+        run: |
+          # Export environment variables for tests
+          set -a
+          if [ -f envs/local.env ]; then
+            source envs/local.env
+          else
+            echo "Warning: envs/local.env not found, continuing without it"
+          fi
+          set +a
+          export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          # Execute the unit and integration test script
+          tests/pytest_utils/scripts/webhook_server_tests_unit_int.sh tests/ondewo_nlu_webhook_server
+
+      # Step 9: Print coverage summary to workflow logs
+      - name: Coverage report (console)
+        if: always()
+        run: coverage report --skip-empty || true
+
+      # Step 10: Upload coverage XML as artifact
+      - name: Upload coverage XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage-xml
+          path: coverage/
+          retention-days: 30
+        continue-on-error: true
+
+      # Step 11: Upload JUnit XML as artifact
+      - name: Upload JUnit XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-junit-xml
+          path: junit/
+          retention-days: 30
+        continue-on-error: true
+
+      # Step 12: Publish JUnit test results as GitHub Check
+      - name: Publish unit test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: junit/pytest_unit-*.xml
+          check_name: Unit Test Results
+        continue-on-error: true
+
+  # Job: Run end-to-end tests
+  e2e-tests:
+    needs: code-style
+    runs-on: ubuntu-latest
+    services:
+      docker: # Enable Docker service for running containerized tests
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14" # Specify Python version
+
+      # Step 3: Install uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      # Step 4: Cache dependencies
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      # Step 5: Install dependencies
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e ".[dev]"
+
+      # Step 6: Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 7: Create output directories for coverage and JUnit reports
+      - name: Create coverage and junit directories
+        run: mkdir -p coverage junit
+
+      # Step 8: Run end-to-end tests
+      - name: Run end-to-end tests
+        env:
+          DOCKER_HOST: tcp://docker:2375
+        run: |
+          # Export environment variables for tests
+          set -a
+          if [ -f envs/local.env ]; then
+            source envs/local.env
+          else
+            echo "Warning: envs/local.env not found, continuing without it"
+          fi
+          set +a
+          # Override container/image names to prevent conflicts in parallel workflow runs
+          export ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_CONTAINER_NAME="ondewo-nlu-wh-${{ github.run_id }}-${{ github.job }}"
+          export ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_IMAGE_NAME="ondewo-nlu-webhook-server-test:${{ github.run_id }}-${{ github.job }}"
+          export PYTHONPATH=$PYTHONPATH:$GITHUB_WORKSPACE:.:..:/opt/ondewo-nlu-webhook-server-python
+          # Execute the e2e test script
+          tests/pytest_utils/scripts/webhook_server_tests_e2e.sh tests/e2e
+
+      # Step 9: Print coverage summary to workflow logs
+      - name: Coverage report (console)
+        if: always()
+        run: coverage report --skip-empty || true
+
+      # Step 10: Upload coverage XML as artifact
+      - name: Upload coverage XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-coverage-xml
+          path: coverage/
+          retention-days: 30
+        continue-on-error: true
+
+      # Step 11: Upload JUnit XML as artifact
+      - name: Upload JUnit XML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-junit-xml
+          path: junit/
+          retention-days: 30
+        continue-on-error: true
+
+      # Step 12: Publish JUnit test results as GitHub Check
+      - name: Publish e2e test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: junit/pytest_e2e-*.xml
+          check_name: E2E Test Results
+        continue-on-error: true
+
+  # Job: Publish combined coverage report as PR comment
+  coverage-report:
+    needs: [unit-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      # Step 1: Download unit test coverage artifact
+      - name: Download unit coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-coverage-xml
+          path: coverage/unit/
+        continue-on-error: true
+
+      # Step 2: Download e2e test coverage artifact
+      - name: Download e2e coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-coverage-xml
+          path: coverage/e2e/
+        continue-on-error: true
+
+      # Step 3: Merge coverage XML files into a single directory
+      - name: Merge coverage XML files
+        id: merge-coverage
+        run: |
+          mkdir -p coverage/combined
+          cp coverage/unit/*.xml coverage/combined/ 2>/dev/null || true
+          cp coverage/e2e/*.xml coverage/combined/ 2>/dev/null || true
+          if ls coverage/combined/*.xml 2>/dev/null | grep -q .; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "Coverage XML files found:"
+            ls -la coverage/combined/
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "No coverage XML files found"
+          fi
+
+      # Step 4: Generate combined code coverage summary
+      - name: Code coverage summary
+        if: steps.merge-coverage.outputs.found == 'true'
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: coverage/combined/*.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: false
+          indicators: true
+          output: both
+          thresholds: '50 75'
+        continue-on-error: true
+
+      # Step 5: Add combined coverage PR comment
+      - name: Add combined coverage PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: steps.merge-coverage.outputs.found == 'true' && github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+          header: combined-coverage-report

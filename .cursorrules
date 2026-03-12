@@ -1,0 +1,377 @@
+# ONDEWO NLU Webhook Server Python - Cursor AI Rules
+
+## Project Overview
+This is the ONDEWO NLU Webhook Server Python project - a FastAPI-based webhook server for handling NLU (Natural Language Understanding) requests from ondewo-nlu-cai. The server processes slot filling and response refinement requests.
+
+## Python Version
+- **Target Python Version**: 3.14
+- Always use Python 3.14 syntax and features
+- Use modern type hints with PEP 695 (type statement) when appropriate
+
+## Code Style and Formatting
+
+### General Principles
+- Follow PEP 8 style guide with 120 character line length
+- Use double quotes for strings (enforced by Black and Ruff)
+- Use trailing commas in multi-line structures
+- Prefer explicit over implicit
+- Write self-documenting code with clear variable names
+
+### Type Hints (CRITICAL)
+- **ALL functions must have complete type hints** for parameters and return values
+- Use modern Python 3.14 type hint syntax:
+  - Use `list[Type]` instead of `List[Type]`
+  - Use `dict[Key, Value]` instead of `Dict[Key, Value]`
+  - Use `tuple[Type, ...]` instead of `Tuple[Type, ...]`
+  - Use `set[Type]` instead of `Set[Type]`
+  - Use `Type | None` instead of `Optional[Type]`
+  - Use `Type1 | Type2` instead of `Union[Type1, Type2]`
+- Always specify return types, including `-> None` for functions that don't return values
+- Use `typing.Any` sparingly and only when truly necessary
+- Example:
+```python
+def process_webhook(
+    request: WebhookRequest,
+    headers: dict[str, str] | None = None,
+) -> WebhookResponse:
+    """Process webhook request with proper typing."""
+    ...
+```
+
+### Docstrings
+- Use Google-style docstrings for all public functions, classes, and modules
+- Include type information in docstrings even though type hints are present
+- Document exceptions that can be raised
+- Example:
+```python
+def slot_filling(
+    active_intent: Intent,
+    active_contexts: list[Context] | None = None,
+    headers: dict[str, str] | None = None,
+) -> list[Context] | None:
+    """
+    Process slot filling for webhook requests.
+
+    Args:
+        active_intent: The matched intent from NLU
+        active_contexts: List of active conversation contexts
+        headers: Optional HTTP headers from the request
+
+    Returns:
+        Updated list of contexts or None if no changes
+
+    Raises:
+        ValidationError: If context data is invalid
+        HTTPException: If authentication fails
+    """
+    ...
+```
+
+### Imports
+- Group imports in the following order:
+  1. Standard library imports
+  2. Third-party library imports
+  3. ONDEWO library imports
+  4. Local application imports
+- Use absolute imports, not relative imports
+- Sort imports alphabetically within each group
+- Use `from X import Y` for specific imports
+- Example:
+```python
+import json
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from ondewo.logging.logger import logger_console as log
+from ondewo.nlu import Intent
+
+from ondewo_nlu_webhook_server.constants import CALL_CASES
+from ondewo_nlu_webhook_server.server.base_models import WebhookRequest
+```
+
+### Async/Await
+- Use `async def` for all FastAPI route handlers
+- Use `async def` for I/O-bound operations (database, HTTP requests, file I/O)
+- Use `await` for async function calls
+- Don't use `async` for CPU-bound operations
+
+### Error Handling
+- Use specific exception types, not bare `except:`
+- Always log exceptions with appropriate context
+- Use FastAPI's HTTPException for HTTP errors
+- Include meaningful error messages
+- Example:
+```python
+try:
+    result = await process_data(data)
+except ValidationError as e:
+    log.error(f"Validation failed: {e}")
+    raise HTTPException(status_code=422, detail=str(e))
+except Exception as e:
+    log.exception("Unexpected error in processing")
+    raise HTTPException(status_code=500, detail="Internal server error")
+```
+
+## Project Structure
+
+### Main Packages
+- `ondewo_nlu_webhook_server/`: Core server implementation
+  - `server/`: FastAPI server, routes, and base models
+  - `constants.py`: Project constants
+  - `globals.py`: Global configuration
+  - `version.py`: Version information
+- `ondewo_nlu_webhook_server_custom_integration/`: Custom business logic
+  - `custom_integration.py`: Main integration point for custom code
+  - `auth.py`: Authentication logic
+  - `utils/`: Utility functions
+- `tests/`: Test suite
+  - `unit/`: Unit tests
+  - `integration/`: Integration tests
+  - `e2e/`: End-to-end tests
+
+### File Organization
+- Keep files focused and under 500 lines when possible
+- Separate concerns: models, business logic, API routes
+- Use `__init__.py` for package exports
+
+## Testing
+
+### Test Requirements
+- Write tests for all new functionality
+- Maintain test coverage above 80%
+- Use pytest markers: `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.e2e`
+- Use descriptive test names: `test_<what>_<condition>_<expected_result>`
+- Example:
+```python
+@pytest.mark.unit
+def test_slot_filling_with_valid_intent_returns_contexts() -> None:
+    """Test that slot filling returns updated contexts for valid intent."""
+    ...
+```
+
+### Test Structure
+- Arrange-Act-Assert pattern
+- Use fixtures for common setup
+- Mock external dependencies
+- Test both success and failure cases
+
+## FastAPI Patterns
+
+### Route Handlers
+- Use dependency injection for authentication
+- Use Pydantic models for request/response validation
+- Include OpenAPI documentation in docstrings
+- Example:
+```python
+@router.post("/slot_filling", response_model=WebhookResponse)
+async def slot_filling_endpoint(
+    request: WebhookRequest,
+    credentials: HTTPBasicCredentials = Depends(verify_credentials),
+) -> WebhookResponse:
+    """
+    Handle slot filling webhook requests.
+
+    This endpoint processes slot filling requests from ondewo-nlu-cai.
+    """
+    ...
+```
+
+### Models
+- Use Pydantic v2 models for all data validation
+- Use `Field` for validation and documentation
+- Use `model_validator` for complex validation
+- Example:
+```python
+from pydantic import BaseModel, Field, model_validator
+
+class WebhookRequest(BaseModel):
+    """Webhook request model."""
+
+    session: str = Field(..., description="Session ID")
+    query_text: str = Field(..., min_length=1, description="User query")
+    intent: Intent = Field(..., description="Matched intent")
+
+    @model_validator(mode='after')
+    def validate_session(self) -> 'WebhookRequest':
+        """Validate session format."""
+        if not self.session.startswith("projects/"):
+            raise ValueError("Invalid session format")
+        return self
+```
+
+## Logging
+
+### Logging Standards
+- Use ONDEWO logging: `from ondewo.logging.logger import logger_console as log`
+- Use appropriate log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Include context in log messages
+- Use structured logging when possible
+- Example:
+```python
+log.debug(f"Processing request for intent: {intent.display_name}")
+log.info(f"Slot filling completed for session: {session_id}")
+log.warning(f"Context not found: {context_name}")
+log.error(f"Failed to process request: {error}", exc_info=True)
+```
+
+### Performance Logging
+- Use `@Timer` decorator for performance-critical functions
+- Example:
+```python
+from ondewo.logging.decorators import Timer
+
+@Timer(logger=log.debug, log_arguments=True, message="Processing time: {:.5f}s")
+async def process_webhook(request: WebhookRequest) -> WebhookResponse:
+    ...
+```
+
+## Security
+
+### Authentication
+- Always validate credentials in route handlers
+- Use dependency injection for auth: `Depends(verify_credentials)`
+- Support both Bearer token and HTTP Basic auth
+- Never log sensitive information (passwords, tokens)
+
+### Input Validation
+- Validate all user input with Pydantic models
+- Sanitize data before processing
+- Use allowlists, not denylists
+- Validate intent names against active_intents list
+
+## Configuration
+
+### Environment Variables
+- Use `.env` files for local development
+- Load with `python-dotenv`
+- Use type-safe config classes
+- Document all environment variables
+- Example:
+```python
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    """Application settings."""
+
+    host: str = "0.0.0.0"
+    port: int = 59001
+    bearer_token: str
+
+    class Config:
+        env_file = ".env"
+        env_prefix = "ONDEWO_NLU_WEBHOOK_SERVER_PYTHON_"
+```
+
+## Git Commit Messages
+
+### Commit Format
+- Use conventional commits format
+- Include JIRA ticket ID: `[OND123-456] feat: add new feature`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Example:
+```
+[OND123-456] feat: add slot filling validation
+
+- Add validation for context parameters
+- Improve error messages
+- Add unit tests for validation logic
+```
+
+## Code Review Checklist
+
+Before submitting code, ensure:
+- [ ] All functions have complete type hints
+- [ ] All public functions have docstrings
+- [ ] Tests are written and passing
+- [ ] Code is formatted with Black and Ruff
+- [ ] MyPy type checking passes
+- [ ] No linting errors from Ruff
+- [ ] Pre-commit hooks pass
+- [ ] Documentation is updated
+- [ ] Environment variables are documented
+- [ ] Error handling is comprehensive
+- [ ] Logging is appropriate
+- [ ] Security best practices are followed
+
+## Tools and Commands
+
+### Development Commands
+```bash
+# Setup environment
+make setup_developer_environment_locally
+
+# Format code
+make format
+
+# Run linting
+make ruff
+
+# Run type checking
+mypy .
+
+# Run tests
+pytest tests/
+
+# Run specific test types
+pytest -m unit
+pytest -m integration
+pytest -m e2e
+
+# Run pre-commit hooks
+pre-commit run --all-files
+```
+
+## Common Patterns
+
+### Custom Integration Pattern
+```python
+@Timer(logger=log.debug, log_arguments=True)
+async def slot_filling(
+    active_intent: Intent,
+    active_contexts: list[Context] | None = None,
+    headers: dict[str, str] | None = None,
+) -> list[Context] | None:
+    """Process slot filling request."""
+
+    # Check if intent is active
+    if active_intent.display_name not in active_intents:
+        log.debug(f"Intent not in active list: {active_intent.display_name}")
+        return active_contexts
+
+    # Process based on intent
+    match active_intent.display_name:
+        case IntentMapping.I_EXAMPLE_MY_DATE.value:
+            return await handle_date_intent(active_contexts)
+        case _:
+            log.warning(f"No handler for intent: {active_intent.display_name}")
+            return active_contexts
+```
+
+## Performance Considerations
+
+- Use async/await for I/O operations
+- Avoid blocking operations in async functions
+- Use connection pooling for external services
+- Cache frequently accessed data
+- Use lazy loading when appropriate
+- Profile code for bottlenecks
+
+## Documentation
+
+- Keep README.md up to date
+- Document all configuration options
+- Include examples in docstrings
+- Update RELEASE.md for changes
+- Document breaking changes prominently
+
+## Remember
+
+- **Type hints are mandatory** - no exceptions
+- Code quality over speed of development
+- Security is paramount
+- Test everything
+- Document as you go
+- Follow existing patterns in the codebase
+- When in doubt, ask for clarification

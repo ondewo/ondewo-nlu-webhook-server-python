@@ -1,0 +1,315 @@
+# Copyright 2021-2025 ONDEWO GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[build-system]
+requires = ["setuptools>=75.0.0", "wheel", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ondewo-nlu-webhook-server"
+dynamic = ["version"]
+description = "ONDEWO NLU Webhook Server Python"
+readme = "README.md"
+requires-python = ">=3.14"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Ondewo GmbH", email = "office@ondewo.com"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+]
+keywords = ["ondewo", "nlu", "webhook", "server"]
+dependencies = [
+    # ONDEWO Open Source Libraries
+    "ondewo-nlu-client>=6.0.0",
+    # Logging
+    "loguru>=0.7.3",
+    # External Libraries
+    "beautifulsoup4>=4.13.4",
+    "cython",
+    "dataclasses-json>=0.6.7",
+    "docker>=7.1.0",
+    "fastapi>=0.115.12",
+    "httpx>=0.28.1",
+    "jsonschema>=4.23.0",
+    "langcodes>=3.5.0",
+    "numpy>=2.2.6",
+    "pip-licenses",
+    "pydantic>=2.11.4",
+    "python-dateutil>=2.9.0.post0",
+    "python-dotenv>=1.1.0",
+    "pytz>=2025.2",
+    "regex>=2024.11.6",
+    "requests>=2.32.3",
+    "semantic-version>=2.10.0",
+    "setuptools>=75.0.0",
+    "starlette>=0.46.2",
+    "typing_extensions>=4.13.2",
+    "uvicorn>=0.34.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Development tools
+    "ipykernel",
+    "ipython",
+    "jupyter",
+    "tqdm",
+    # Testing
+    "coverage>=7.8.0",
+    "mock",
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
+    "pytest-rerunfailures>=15.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.6.1",
+    "pytest-dotenv>=0.5.2",
+    "pytest-asyncio>=1.0.0",
+    "pytest-mock>=3.14.0",
+    # Code quality
+    "types-beautifulsoup4",
+    "types-jsonschema",
+    "types-mock",
+    "types-python-dateutil",
+    "types-pytz",
+    "types-requests",
+    "types-setuptools",
+    # Formatting and linting
+    "ruff>=0.11.12",
+    "mypy>=1.18.0",
+    # Pre-commit
+    "pre-commit>=4.2.0",
+    # Build tools
+    "build>=1.2.2",
+    "twine>=6.1.0",
+]
+
+[tool.setuptools]
+packages = ["ondewo_nlu_webhook_server", "ondewo_nlu_webhook_server_custom_integration"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ondewo_nlu_webhook_server.version.__version__"}
+
+[tool.setuptools.package-data]
+"*" = ["*.png", "*.ico", "*.html"]
+
+# Ruff configuration
+[tool.ruff]
+target-version = "py314"
+line-length = 120
+exclude = [
+    ".git",
+    ".nox",
+    "__pycache__",
+    "ondewo_utils",
+    "playground",
+    "venv",
+    ".venv",
+    "notebooks",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".eggs",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long (handled by ruff format)
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # Allow exceptions without specifying exception type in except clauses
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ondewo_nlu_webhook_server", "ondewo_nlu_webhook_server_custom_integration"]
+combine-as-imports = true
+force-single-line = false
+force-sort-within-sections = false
+lines-after-imports = 2
+split-on-trailing-comma = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+"tests/**/*.py" = ["B011"]  # Allow assert statements in tests
+"ondewo_nlu_webhook_server_custom_integration/**/*.py" = ["F401", "F811"]
+"**/ondewo/csi/**/*.py" = ["F401", "F811"]
+"**/ondewo/nlu/**/*.py" = ["F401", "F811"]
+"**/ondewo/s2t/**/*.py" = ["F401", "F811"]
+"**/ondewo/sip/**/*.py" = ["F401", "F811"]
+"**/ondewo/t2s/**/*.py" = ["F401", "F811"]
+"**/ondewo/utils/**/*.py" = ["F401", "F811"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.14"
+mypy_path = "ondewo_nlu_webhook_server:ondewo_nlu_webhook_server_custom_integration"
+namespace_packages = true
+ignore_errors = false
+ignore_missing_imports = false
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+show_traceback = true
+warn_no_return = true
+warn_return_any = true
+warn_unused_configs = false
+exclude = [
+    "^tests/.*",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "ondewo_nlu_webhook_server_custom_integration.*",
+    "ondewo.csi.*",
+    "ondewo.nlu.*",
+    "ondewo.s2t.*",
+    "ondewo.sip.*",
+    "ondewo.t2s.*",
+    "ondewo.utils.*",
+    "_pytest.*",
+    "dataclasses_json.*",
+    "docker.*",
+    "dotenv.*",
+    "Cython.*",
+    "faker.*",
+    "fastapi.*",
+    "google.*",
+    "httpx.*",
+    "grpc.*",
+    "grpc_reflection.*",
+    "jsonschema.*",
+    "langcodes.*",
+    "loguru.*",
+    "marshmallow.*",
+    "numpy.*",
+    "pandas.*",
+    "pattern.*",
+    "polling.*",
+    "psutil.*",
+    "pydantic.*",
+    "pydantic_core.*",
+    "pydub.*",
+    "pydub.playback.*",
+    "pytest.*",
+    "pytest_mock.*",
+    "pytypes.*",
+    "regex.*",
+    "requests.*",
+    "responses.*",
+    "semantic_version.*",
+    "sqlalchemy.*",
+    "sqlalchemy_utils.*",
+    "starlette.*",
+    "tqdm.*",
+    "typing_inspect.*",
+    "uvicorn.*",
+    "yaml.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+]
+norecursedirs = [
+    ".git",
+    ".nox",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".venv",
+    "venv",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".eggs",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+env_files = ["envs/local.env"]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["ondewo_nlu_webhook_server", "ondewo_nlu_webhook_server_custom_integration"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/*.egg-info/*",
+]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "coverage/html"
+
+[tool.coverage.xml]
+output = "coverage/coverage.xml"
